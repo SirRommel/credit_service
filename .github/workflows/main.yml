@@ -1,0 +1,29 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  deploy-production:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Deploy to production stage
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          script: |
+            cd /root/bank-app/credit-service
+            git fetch --all
+            git reset --hard origin/main
+            cd ..
+            git config user.name «CI»
+            git config user.email «ci@bot.com»
+            git add .
+            git commit -m "Updated credit service"
+            git push
+            docker compose up --build --force-recreate -d --no-deps credit-service
