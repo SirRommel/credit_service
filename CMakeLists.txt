@@ -39,8 +39,8 @@ add_executable(credit_service
 #        src/core/routers/rabbit_mq_handler.cpp
 #        src/config/env_config.h
 #        src/config/env_config.cpp
-#        src/tools/json_tools.h
-#        src/tools/json_tools.cpp
+        src/tools/json_tools.h
+        src/tools/json_tools.cpp
         src/tools/utils.h
         src/tools/utils.cpp
         src/app.h

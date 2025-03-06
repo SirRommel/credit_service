@@ -30,7 +30,7 @@ namespace app {
 
             // Вспомогательные методы
             std::string create_tariff(const std::string& body);
-            std::string get_all_tariffs();
+            std::string get_all_tariffs(int id);
             std::string update_tariff(int id, const std::string& body);
             std::string delete_tariff(int id);
             int extract_id_from_path(const std::string& path);

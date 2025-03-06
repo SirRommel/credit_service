@@ -6,6 +6,6 @@
 
 #ifndef JSON_TOOLS_H
 #define JSON_TOOLS_H
-std::string create_json_response(const std::string &key, const std::string &value);
+std::string create_json_response(int id, const std::string& message);
 
 #endif //JSON_TOOLS_H
