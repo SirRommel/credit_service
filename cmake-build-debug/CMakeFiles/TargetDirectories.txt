@@ -1,0 +1,3 @@
+/home/rommel/projects/credit_service/cmake-build-debug/CMakeFiles/credit_service.dir
+/home/rommel/projects/credit_service/cmake-build-debug/CMakeFiles/edit_cache.dir
+/home/rommel/projects/credit_service/cmake-build-debug/CMakeFiles/rebuild_cache.dir
