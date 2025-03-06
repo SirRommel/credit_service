@@ -637,6 +637,7 @@
 
 #include "db/database_initializer.h"
 #include "models/db_models/tariff_model.h"
+#include "models/db_models/credit_history_model.h"
 
 int main() {
     try {
@@ -644,7 +645,9 @@ int main() {
 
         // Регистрация моделей
         auto tariff_model = std::make_shared<TariffModel>();
+        auto credit_history_model = std::make_shared<CreditHistoryModel>();
         DatabaseInitializer::instance().register_model(tariff_model);
+        DatabaseInitializer::instance().register_model(credit_history_model);
 
         db::DatabaseManager db(config);
         db.start();

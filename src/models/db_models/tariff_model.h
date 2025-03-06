@@ -10,8 +10,8 @@ public:
 
     std::vector<std::string> get_columns() const override {
         return {
-            "id SERIAL PRIMARY KEY",
-            "employee_id INTEGER NOT NULL",
+            "id UUID PRIMARY KEY DEFAULT uuid_generate_v4()",
+            "employee_id UUID NOT NULL",
             "name VARCHAR(255) NOT NULL",
             "interest_rate NUMERIC(5,2) CHECK (interest_rate BETWEEN 0 AND 100)"
         };

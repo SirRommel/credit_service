@@ -116,6 +116,14 @@ namespace db {
             return;
         }
 
+        // Добавляем расширение uuid-ossp
+        std::string create_extension = "CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\"";
+        PGresult* ext_res = PQexec(conn_, create_extension.c_str());
+        if (PQresultStatus(ext_res) != PGRES_COMMAND_OK) {
+            std::cerr << "Failed to create extension: " << PQerrorMessage(conn_) << std::endl;
+        }
+        PQclear(ext_res);
+
         auto& initializer = DatabaseInitializer::instance();
         for (auto& model : initializer.get_models()) {
             std::string query = model->get_create_table_query();

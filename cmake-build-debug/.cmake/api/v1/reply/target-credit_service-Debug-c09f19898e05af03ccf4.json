@@ -37,7 +37,7 @@
 			{
 				"command" : 1,
 				"file" : 0,
-				"line" : 79,
+				"line" : 80,
 				"parent" : 0
 			},
 			{
@@ -75,7 +75,7 @@
 			{
 				"command" : 5,
 				"file" : 0,
-				"line" : 71,
+				"line" : 72,
 				"parent" : 0
 			}
 		]
@@ -243,7 +243,8 @@
 				19,
 				20,
 				21,
-				22
+				22,
+				24
 			]
 		}
 	],
@@ -376,6 +377,11 @@
 			"compileGroupIndex" : 0,
 			"path" : "src/endpoints/tariff_endpoint.cpp",
 			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/models/db_models/credit_history_model.h",
+			"sourceGroupIndex" : 1
 		}
 	],
 	"type" : "EXECUTABLE"

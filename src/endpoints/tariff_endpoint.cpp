@@ -5,6 +5,8 @@
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/algorithm/string.hpp>
 #include <sstream>
+#include <regex>
+
 #include "../db/database_manager.h"
 #include "errors/http_errors.h"
 
@@ -21,7 +23,7 @@ namespace endpoints {
                 return res;
             }
             else if (req.method() == boost::beast::http::verb::get) {
-                int id = extract_id_from_path(req.target());
+                std::string id = extract_id_from_path(req.target());
                 std::string result = get_all_tariffs(id);
                 boost::beast::http::response<boost::beast::http::string_body> res{boost::beast::http::status::ok, req.version()};
                 res.set(boost::beast::http::field::content_type, "application/json");
@@ -29,9 +31,13 @@ namespace endpoints {
                 return res;
             }
             else {
-                int id = extract_id_from_path(req.target());
-                if (id <= 0) {
-                    return errors::not_found(req);
+                std::string id = extract_id_from_path(req.target());
+                if (id.empty()) {
+                    return errors::create_error_response(
+                        http::status::bad_request,
+                        "Invalid UUID format",
+                        req
+                    );
                 }
 
                 if (req.method() == boost::beast::http::verb::put) {
@@ -76,7 +82,7 @@ namespace endpoints {
             boost::property_tree::ptree pt;
             boost::property_tree::read_json(ss, pt);
 
-            int employee_id = pt.get<int>("employee_id");
+            std::string employee_id = pt.get<std::string>("employee_id");
             std::string name = pt.get<std::string>("name");
             double interest_rate = pt.get<double>("interest_rate");
 
@@ -90,7 +96,7 @@ namespace endpoints {
             auto future = promise.get_future();
 
             std::string query = "INSERT INTO tariffs (employee_id, name, interest_rate) "
-                                "VALUES (" + std::to_string(employee_id) + ", '" +
+                                "VALUES ('" + employee_id + "', '" +  // Добавлены кавычки для UUID
                                 name + "', " + std::to_string(interest_rate) + ") RETURNING id";
 
             db_.async_query(query, [&](PGresult* res) {
@@ -103,22 +109,21 @@ namespace endpoints {
                 throw std::runtime_error("Failed to create tariff");
             }
 
-            int new_id = std::stoi(PQgetvalue(res, 0, 0));
+            std::string new_id = PQgetvalue(res, 0, 0);
             PQclear(res);
 
-            return "Tariff created with ID: " + std::to_string(new_id);
+            return "Tariff created with ID: " + new_id;
         }
 
-        std::string TariffEndpoint::get_all_tariffs(int id) {
+        std::string TariffEndpoint::get_all_tariffs(std::string id) {
             std::promise<PGresult*> promise;
             auto future = promise.get_future();
         std::cout << "ID ID ID ID ID   " << id << std::endl;
-            if (id != -1) {
-                std::string query = "SELECT * FROM tariffs WHERE id = " + std::to_string(id);
+            if (!id.empty()) {
+                std::string query = "SELECT * FROM tariffs WHERE id = '" + id + "'";
                 db_.async_query(query, [&](PGresult* res) {
                     promise.set_value(res);
                 });
-
                 PGresult* res = future.get();
                 if (PQresultStatus(res) != PGRES_TUPLES_OK) {
                     PQclear(res);
@@ -164,8 +169,8 @@ namespace endpoints {
                 for (int i = 0; i < rows; ++i) {
                     boost::property_tree::ptree tariff;
                     tariff.put("id", PQgetvalue(res, i, 0));
-                    tariff.put("name", PQgetvalue(res, i, 1));
-                    tariff.put("interest_rate", PQgetvalue(res, i, 2));
+                    tariff.put("name", PQgetvalue(res, i, 2));
+                    tariff.put("interest_rate", PQgetvalue(res, i, 3));
                     tariffs.push_back(std::make_pair("", tariff));
                 }
 
@@ -179,7 +184,7 @@ namespace endpoints {
 
         }
 
-            std::string TariffEndpoint::update_tariff(int id, const std::string & body) {
+            std::string TariffEndpoint::update_tariff(std::string id, const std::string & body) {
                 std::stringstream ss(body);
                 boost::property_tree::ptree pt;
                 boost::property_tree::read_json(ss, pt);
@@ -208,7 +213,7 @@ namespace endpoints {
                 }
 
                 query << boost::algorithm::join(updates, ", "); // Правильное формирование запроса
-                query << " WHERE id = " << id;
+                query << " WHERE id = '" + id + "'";
 
                 std::promise<PGresult*> promise;
                 auto future = promise.get_future();
@@ -227,11 +232,11 @@ namespace endpoints {
                 return "Tariff updated successfully";
             }
 
-        std::string TariffEndpoint::delete_tariff(int id) {
+        std::string TariffEndpoint::delete_tariff(std::string id) {
             std::promise<PGresult*> promise;
             auto future = promise.get_future();
 
-            std::string query = "DELETE FROM tariffs WHERE id = " + std::to_string(id);
+            std::string query = "DELETE FROM tariffs WHERE id = '" + id + "'";
             db_.async_query(query, [&](PGresult* res) {
                 promise.set_value(res);
             });
@@ -246,17 +251,16 @@ namespace endpoints {
             return "Tariff deleted successfully";
         }
 
-            int TariffEndpoint::extract_id_from_path(const std::string& path) {
-                size_t pos = path.find_last_of('/');
-                if (pos == std::string::npos) return -1;
+        std::string TariffEndpoint::extract_id_from_path(const std::string& path) {
+            std::string uuid_regex_str = "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}";
+            std::regex uuid_pattern(uuid_regex_str);
+            std::smatch matches;
 
-                std::string id_str = path.substr(pos + 1);
-                try {
-                    return std::stoi(id_str);
-                } catch (const std::exception&) {
-                    return -1;  // Ошибка преобразования
-                }
+            if (std::regex_search(path.begin(), path.end(), matches, uuid_pattern)) {
+                return matches.str();
             }
+            return "";
+        }
 
         } // namespace endpoints
 } // namespace app
