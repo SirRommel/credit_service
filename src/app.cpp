@@ -10,6 +10,7 @@
 #include "db/database_manager.h"
 #include "endpoints/db_test_endpoint.h"
 #include "endpoints/tariff_endpoint.h"
+#include "endpoints/credit_limit_endpoint.h"
 
 
 App::App(const std::map<std::string, std::string>& config, db::DatabaseManager& db)
@@ -84,6 +85,7 @@ void App::register_endpoints() {
     endpoints_["/time"] = std::make_unique<app::endpoints::TimeEndpoint>();
     endpoints_["/db-test"] = std::make_unique<DbTestEndpoint>(db_);
     endpoints_["/tariffs"] = std::make_unique<app::endpoints::TariffEndpoint>(db_);
+    endpoints_["/credit-limit"] = std::make_unique<CreditLimitEndpoint>(db_);
 }
 
 void App::handle_request(tcp::socket socket, beast::flat_buffer buffer) {
@@ -102,6 +104,10 @@ void App::handle_request(tcp::socket socket, beast::flat_buffer buffer) {
 
         if (it == endpoints_.end() && target.find("/tariffs/") == 0) {
             it = endpoints_.find("/tariffs");
+        }
+
+        if (it == endpoints_.end() && target.find("/credit-limit/") == 0) {
+            it = endpoints_.find("/credit-limit");
         }
 
         if (it != endpoints_.end()) {

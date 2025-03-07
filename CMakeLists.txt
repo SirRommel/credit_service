@@ -63,6 +63,8 @@ add_executable(credit_service
         src/endpoints/tariff_endpoint.h
         src/endpoints/tariff_endpoint.cpp
         src/models/db_models/credit_history_model.h
+        src/endpoints/credit_limit_endpoint.h
+        src/endpoints/credit_limit_endpoint.cpp
 
 )
 
