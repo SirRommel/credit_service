@@ -29,14 +29,10 @@ endif()
 # Добавление исполняемого файла
 add_executable(credit_service
         main.cpp
-#        src/rabbit_mq/rabbit_mq_worker.h
-#        src/rabbit_mq/rabbit_mq_worker.cpp
 #        src/core/task_queue.h
 #        src/core/task_queue.cpp
 #        src/core/routers/headers/http_router.h
 #        src/core/routers/http_router.cpp
-#        src/core/routers/rabbit_mq_handler.h
-#        src/core/routers/rabbit_mq_handler.cpp
 #        src/config/env_config.h
 #        src/config/env_config.cpp
         src/tools/json_tools.h
@@ -65,6 +61,10 @@ add_executable(credit_service
         src/models/db_models/credit_history_model.h
         src/endpoints/credit_limit_endpoint.h
         src/endpoints/credit_limit_endpoint.cpp
+        src/rabbit_mq/rabbitmq_manager.h
+        src/rabbit_mq/rabbitmq_manager.cpp
+        src/endpoints/test_rabbit_endpoint.h
+        src/endpoints/test_rabbit_endpoint.cpp
 
 )
 

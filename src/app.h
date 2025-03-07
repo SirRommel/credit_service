@@ -9,6 +9,7 @@
 #include "endpoints/endpoint.h"
 #include "tools/utils.h"
 #include "db/database_manager.h"
+#include "rabbit_mq/rabbitmq_manager.h"
 
 
 namespace beast = boost::beast;
@@ -18,7 +19,9 @@ using tcp = net::ip::tcp;
 
 class App {
 public:
-    App(const std::map<std::string, std::string>& config, db::DatabaseManager& db);
+    App(const std::map<std::string, std::string>& config,
+        db::DatabaseManager& db,
+        RabbitMQManager& rabbitmq);
     void run();
     void stop();
 
@@ -28,6 +31,7 @@ private:
     void register_endpoints();
 
     db::DatabaseManager& db_;
+    RabbitMQManager& rabbitmq_;
     std::unordered_map<std::string, std::unique_ptr<app::endpoints::Endpoint>> endpoints_;
     net::io_context ioc_;
     tcp::acceptor acceptor_;

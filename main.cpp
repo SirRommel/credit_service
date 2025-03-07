@@ -650,15 +650,18 @@ int main() {
         DatabaseInitializer::instance().register_model(credit_history_model);
 
         db::DatabaseManager db(config);
+        RabbitMQManager rabbitmq(config);
         db.start();
 
-        App app(config, db);
+
+        App app(config, db, rabbitmq);
         app.run();
 
         std::cin.get();
 
         app.stop();
         db.stop();
+        rabbitmq.stop();
     } catch (std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;
         return 1;

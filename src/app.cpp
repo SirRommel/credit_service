@@ -11,13 +11,15 @@
 #include "endpoints/db_test_endpoint.h"
 #include "endpoints/tariff_endpoint.h"
 #include "endpoints/credit_limit_endpoint.h"
+#include "endpoints/test_rabbit_endpoint.h"
 
 
-App::App(const std::map<std::string, std::string>& config, db::DatabaseManager& db)
+App::App(const std::map<std::string, std::string>& config, db::DatabaseManager& db, RabbitMQManager& rabbitmq)
     : ioc_(),
       acceptor_(ioc_),
       config_(config),
-      db_(db)  // Теперь инициализируем db_
+      db_(db),
+      rabbitmq_(rabbitmq)
 {
 
     std::string host = "0.0.0.0";
@@ -50,6 +52,7 @@ App::App(const std::map<std::string, std::string>& config, db::DatabaseManager& 
                   << host << ":" << port << " - " << e.what() << std::endl;
         throw; // Перебрасываем исключение
     }
+
 
     register_endpoints();
     accept();
@@ -86,6 +89,7 @@ void App::register_endpoints() {
     endpoints_["/db-test"] = std::make_unique<DbTestEndpoint>(db_);
     endpoints_["/tariffs"] = std::make_unique<app::endpoints::TariffEndpoint>(db_);
     endpoints_["/credit-limit"] = std::make_unique<CreditLimitEndpoint>(db_);
+    endpoints_["/test-rabbit"] = std::make_unique<app::endpoints::TestRabbitEndpoint>(rabbitmq_);
 }
 
 void App::handle_request(tcp::socket socket, beast::flat_buffer buffer) {
@@ -106,8 +110,8 @@ void App::handle_request(tcp::socket socket, beast::flat_buffer buffer) {
             it = endpoints_.find("/tariffs");
         }
 
-        if (it == endpoints_.end() && target.find("/credit-limit/") == 0) {
-            it = endpoints_.find("/credit-limit");
+        if (it == endpoints_.end() && target.find("/test-rabbit/") == 0) {
+            it = endpoints_.find("/test-rabbit");
         }
 
         if (it != endpoints_.end()) {

@@ -5,17 +5,7 @@
 #include <map>
 
 
-void send_response(boost::asio::ip::tcp::socket &socket, const std::string &status, const std::string &json_response) {
-    std::ostringstream response_stream;
-    response_stream
-        << "HTTP/1.1 " << status << "\r\n"
-        << "Content-Type: application/json\r\n"
-        << "Content-Length: " << json_response.length() << "\r\n"
-        << "\n"
-        << json_response;
 
-    boost::asio::write(socket, boost::asio::buffer(response_stream.str()));
-}
 
 std::map<std::string, std::string> read_env_file(const std::string& filename) {
     std::map<std::string, std::string> env_map;
