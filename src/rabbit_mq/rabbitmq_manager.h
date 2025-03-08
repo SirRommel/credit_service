@@ -8,6 +8,7 @@
 #include <mutex>
 #include <thread>
 #include <map>
+#include <boost/property_tree/ptree_fwd.hpp>
 
 class RabbitMQManager {
 public:
@@ -17,12 +18,18 @@ public:
     void async_publish(const std::string& message);
     void start_consuming();
     void stop();
+    std::optional<boost::property_tree::ptree> wait_for_response(
+        const std::string& type,
+        std::chrono::seconds timeout,
+        const std::map<std::string, std::string>& filters);
 
 private:
     void connect();
     void setup_consumer();
     void process_queue();
 
+    std::map<std::string, std::deque<boost::property_tree::ptree>> message_queues_;
+    std::condition_variable queue_cv_;
     std::map<std::string, std::string> config_;
     boost::asio::io_context ioc_;
     std::thread thread_;

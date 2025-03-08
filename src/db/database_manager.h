@@ -20,11 +20,24 @@ namespace db {
         void stop();
         std::string get_last_error() const;
         void initialize_tables();
-
+        PGconn* get_connection() const { return conn_; }
         // Асинхронное выполнение запроса
-        void async_query(
+
+        void async_query_params(
             const std::string& query,
+            const char* const* paramValues,
+            int nParams,
             std::function<void(PGresult*)> callback);
+
+        struct QueryItem {
+            enum class Type { SIMPLE, PARAMETERIZED };
+
+            Type type;
+            std::string query;
+            const char* const* paramValues;
+            int nParams;
+            std::function<void(PGresult*)> callback;
+        };
 
     private:
         void connect();
@@ -35,7 +48,7 @@ namespace db {
         boost::asio::io_context ioc_;
         std::thread thread_;
         PGconn* conn_;
-        std::queue<std::pair<std::string, std::function<void(PGresult*)>>> query_queue_;
+        std::queue<QueryItem> query_queue_;
         boost::asio::executor_work_guard<boost::asio::io_context::executor_type> work_;
         std::mutex queue_mutex_;
         bool running_;

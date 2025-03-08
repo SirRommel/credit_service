@@ -20,6 +20,7 @@ std::string CreditLimitEndpoint::extract_user_id(const std::string& path) {
     if (std::regex_match(user_id, matches, uuid_pattern)) {
         return user_id;
     }
+
     return "";
 }
 
@@ -36,19 +37,32 @@ boost::beast::http::response<boost::beast::http::string_body> CreditLimitEndpoin
 
         // Проверка существования записи и получение рейтинга
         std::promise<PGresult*> promise;
-        std::string select_query = "SELECT rating FROM credit_history WHERE user_id = '" + user_id + "'";
-        db_.async_query(select_query, [&](PGresult* res) { promise.set_value(res); });
+        const char* paramValues[] = {user_id.c_str()};
+        db_.async_query_params(
+            "SELECT rating FROM credit_history WHERE user_id = $1",
+            paramValues,
+            1,
+            [&](PGresult* res) { promise.set_value(res); }
+        );
         PGresult* select_res = promise.get_future().get();
 
         double rating = 50.0; // Значение по умолчанию
         bool exists = PQntuples(select_res) > 0;
 
+        std::cout << "HEEEEEEEEEy" << std::endl;
+
         if (!exists) {
             std::cout << "FFFFFFFFFOWIOFIWO" << std::endl;
             // Создаем новую запись с рейтингом 50
-            std::string insert_query = "INSERT INTO credit_history (user_id, rating) VALUES ('" + user_id + "', 50)";
             std::promise<PGresult*> insert_promise;
-            db_.async_query(insert_query, [&](PGresult* res) { insert_promise.set_value(res); });
+            const char* insertParams[] = {user_id.c_str(), "50"};
+            db_.async_query_params(
+                "INSERT INTO credit_history (user_id, rating) VALUES ($1, $2)",
+                insertParams,
+                2,
+                [&](PGresult* res) { insert_promise.set_value(res); }
+            );
+
             PGresult* insert_res = insert_promise.get_future().get();
             PQclear(insert_res);
         } else {

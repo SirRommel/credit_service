@@ -1,4 +1,7 @@
 #include <string>
+
+#include <sstream>
+#include <string>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
 #include <ctime>
@@ -7,5 +10,6 @@
 #ifndef JSON_TOOLS_H
 #define JSON_TOOLS_H
 std::string create_json_response(int id, const std::string& message);
+boost::property_tree::ptree parse_rabbitmq_message(const std::string& message);
 
 #endif //JSON_TOOLS_H

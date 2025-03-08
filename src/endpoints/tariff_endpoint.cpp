@@ -94,14 +94,14 @@ namespace endpoints {
             // Вставка в БД
             std::promise<PGresult*> promise;
             auto future = promise.get_future();
-
-            std::string query = "INSERT INTO tariffs (employee_id, name, interest_rate) "
-                                "VALUES ('" + employee_id + "', '" +  // Добавлены кавычки для UUID
-                                name + "', " + std::to_string(interest_rate) + ") RETURNING id";
-
-            db_.async_query(query, [&](PGresult* res) {
-                promise.set_value(res);
-            });
+            std::string interest_rate_str = std::to_string(interest_rate);
+            const char* params[] = {employee_id.c_str(), name.c_str(), interest_rate_str.c_str()};
+            db_.async_query_params(
+                "INSERT INTO tariffs (employee_id, name, interest_rate) VALUES ($1, $2, $3) RETURNING id",
+                params,
+                3,
+                [&](PGresult* res) { promise.set_value(res); }
+            );
 
             PGresult* res = future.get();
             if (PQresultStatus(res) != PGRES_TUPLES_OK) {
@@ -118,12 +118,16 @@ namespace endpoints {
         std::string TariffEndpoint::get_all_tariffs(std::string id) {
             std::promise<PGresult*> promise;
             auto future = promise.get_future();
-        std::cout << "ID ID ID ID ID   " << id << std::endl;
+            std::cout << "ID ID ID ID ID   " << id << std::endl;
             if (!id.empty()) {
-                std::string query = "SELECT * FROM tariffs WHERE id = '" + id + "'";
-                db_.async_query(query, [&](PGresult* res) {
-                    promise.set_value(res);
-                });
+                const char* params[] = {id.c_str()};
+                db_.async_query_params(
+                    "SELECT * FROM tariffs WHERE id = ($1)",
+                    params,
+                    1,
+                    [&](PGresult* res) { promise.set_value(res); }
+                );
+
                 PGresult* res = future.get();
                 if (PQresultStatus(res) != PGRES_TUPLES_OK) {
                     PQclear(res);
@@ -151,9 +155,13 @@ namespace endpoints {
                 boost::property_tree::write_json(oss, pt);
                 return oss.str();
             } else {
-                db_.async_query("SELECT * FROM tariffs", [&](PGresult* res) {
-                    promise.set_value(res);
-                });
+                const char* params[] = {};
+                db_.async_query_params(
+                    "SELECT * FROM tariffs",
+                    params,
+                    0,
+                    [&](PGresult* res) { promise.set_value(res); }
+                );
 
                 PGresult* res = future.get();
                 if (PQresultStatus(res) != PGRES_TUPLES_OK) {
@@ -188,9 +196,7 @@ namespace endpoints {
                 std::stringstream ss(body);
                 boost::property_tree::ptree pt;
                 boost::property_tree::read_json(ss, pt);
-
-                std::ostringstream query;
-                query << "UPDATE tariffs SET ";
+        
 
                 std::vector<std::string> updates;
 
@@ -211,16 +217,30 @@ namespace endpoints {
                 if (updates.empty()) {
                     throw std::invalid_argument("No fields to update");
                 }
-
-                query << boost::algorithm::join(updates, ", "); // Правильное формирование запроса
-                query << " WHERE id = '" + id + "'";
+                std::vector<std::string> paramValues;
+                for (const auto& update : updates) {
+                    size_t pos = update.find("=");
+                    if (pos != std::string::npos) {
+                        paramValues.push_back(update.substr(pos + 2)); // Извлекаем значение после " = "
+                    }
+                }
+                paramValues.push_back(id);
 
                 std::promise<PGresult*> promise;
                 auto future = promise.get_future();
+                std::ostringstream query;
+                query << "UPDATE tariffs SET ";
+                for (size_t i = 0; i < updates.size(); ++i) {
+                    query << updates[i].substr(0, updates[i].find("=")) << " = $" << (i + 1);
+                    if (i < updates.size() - 1) query << ", ";
+                }
+                query << " WHERE id = $" << (paramValues.size());
 
-                db_.async_query(query.str(), [&](PGresult* res) {
-                    promise.set_value(res);
-                });
+                // Вызываем async_query_params
+                const char* params[paramValues.size()];
+                std::transform(paramValues.begin(), paramValues.end(), params, [](const std::string& s) { return s.c_str(); });
+
+                db_.async_query_params(query.str(), params, paramValues.size(), [&](PGresult* res) { promise.set_value(res); });
 
                 PGresult* res = future.get();
                 if (PQresultStatus(res) != PGRES_COMMAND_OK) {
@@ -236,10 +256,8 @@ namespace endpoints {
             std::promise<PGresult*> promise;
             auto future = promise.get_future();
 
-            std::string query = "DELETE FROM tariffs WHERE id = '" + id + "'";
-            db_.async_query(query, [&](PGresult* res) {
-                promise.set_value(res);
-            });
+            const char* params[] = { id.c_str() };
+            db_.async_query_params("DELETE FROM tariffs WHERE id = $1", params, 1, [&](PGresult* res) { promise.set_value(res); });
 
             PGresult* res = future.get();
             if (PQresultStatus(res) != PGRES_COMMAND_OK) {

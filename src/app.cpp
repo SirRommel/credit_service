@@ -12,6 +12,7 @@
 #include "endpoints/tariff_endpoint.h"
 #include "endpoints/credit_limit_endpoint.h"
 #include "endpoints/test_rabbit_endpoint.h"
+#include "endpoints/credit_endpoint.h"
 
 
 App::App(const std::map<std::string, std::string>& config, db::DatabaseManager& db, RabbitMQManager& rabbitmq)
@@ -90,6 +91,7 @@ void App::register_endpoints() {
     endpoints_["/tariffs"] = std::make_unique<app::endpoints::TariffEndpoint>(db_);
     endpoints_["/credit-limit"] = std::make_unique<CreditLimitEndpoint>(db_);
     endpoints_["/test-rabbit"] = std::make_unique<app::endpoints::TestRabbitEndpoint>(rabbitmq_);
+    endpoints_["/credit"] = std::make_unique<CreditEndpoint>(db_, rabbitmq_);
 }
 
 void App::handle_request(tcp::socket socket, beast::flat_buffer buffer) {
@@ -105,6 +107,14 @@ void App::handle_request(tcp::socket socket, beast::flat_buffer buffer) {
     try {
         auto target = std::string(req.target());
         auto it = endpoints_.find(target);
+
+        if (it == endpoints_.end() && target.find("/credit/") == 0) {
+            it = endpoints_.find("/credit");
+        }
+
+        if (it == endpoints_.end() && target.find("/credit-limit/") == 0) {
+            it = endpoints_.find("/credit-limit");
+        }
 
         if (it == endpoints_.end() && target.find("/tariffs/") == 0) {
             it = endpoints_.find("/tariffs");

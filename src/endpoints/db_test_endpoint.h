@@ -9,10 +9,13 @@ public:
     handle(const http::request<http::string_body>& req) {
         std::promise<PGresult*> promise;
         auto future = promise.get_future();
-
-        db_.async_query("SELECT version();", [&](PGresult* res) {
-            promise.set_value(res);
-        });
+        const char* insertParams[] = {};
+        db_.async_query_params(
+            "SELECT version();",
+            insertParams,
+            2,
+            [&](PGresult* res) { promise.set_value(res); }
+        );
 
         PGresult* res = future.get();
 

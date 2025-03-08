@@ -65,6 +65,9 @@ add_executable(credit_service
         src/rabbit_mq/rabbitmq_manager.cpp
         src/endpoints/test_rabbit_endpoint.h
         src/endpoints/test_rabbit_endpoint.cpp
+        src/models/db_models/credit_model.h
+        src/endpoints/credit_endpoint.h
+        src/endpoints/credit_endpoint.cpp
 
 )
 

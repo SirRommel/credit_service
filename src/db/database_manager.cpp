@@ -58,16 +58,28 @@ namespace db {
         }
     }
 
-    void DatabaseManager::async_query(
-    const std::string& query,
-    std::function<void(PGresult*)> callback)
+
+    void DatabaseManager::async_query_params(
+        const std::string& query,
+        const char* const* paramValues,
+        int nParams,
+        std::function<void(PGresult*)> callback)
     {
+        std::cout << query << std::endl;
         std::lock_guard<std::mutex> lock(queue_mutex_);
-        if (!running_) { // Проверка состояния
+        if (!running_) {
             if (callback) callback(nullptr);
             return;
         }
-        query_queue_.emplace(query, callback);
+
+        query_queue_.push({
+            QueryItem::Type::PARAMETERIZED,
+            query,
+            paramValues,
+            nParams,
+            callback
+        });
+
         ioc_.post([this]() { process_queue(); });
     }
 
@@ -80,7 +92,7 @@ namespace db {
             if (!conn_ || PQstatus(conn_) != CONNECTION_OK) {
                 while (!query_queue_.empty()) {
                     auto& item = query_queue_.front();
-                    if (item.second) item.second(nullptr);
+                    if (item.callback) item.callback(nullptr);
                     query_queue_.pop();
                 }
                 return;
@@ -88,20 +100,40 @@ namespace db {
         }
 
         while (!query_queue_.empty()) {
-            auto item = std::move(query_queue_.front());
+            QueryItem item = std::move(query_queue_.front());
             query_queue_.pop();
             lock.unlock();
-            std::cout << item.first << std::endl;
-            PGresult* res = PQexec(conn_, item.first.c_str());
 
-            // Проверка статуса подключения
+            PGresult* res = nullptr;
+
+            if (item.type == QueryItem::Type::SIMPLE) {
+                res = PQexec(conn_, item.query.c_str());
+            } else {
+                res = PQexecParams(conn_,
+                    item.query.c_str(),
+                    item.nParams,
+                    nullptr,
+                    item.paramValues,
+                    nullptr,
+                    nullptr,
+                    0);
+            }
+            if (res) {
+                std::cout << "Query status: " << PQresStatus(PQresultStatus(res)) << std::endl;
+                if (PQresultStatus(res) != PGRES_COMMAND_OK && PQresultStatus(res) != PGRES_TUPLES_OK) {
+                    std::cerr << "Query error: " << PQerrorMessage(conn_) << std::endl;
+                }
+            } else {
+                std::cerr << "Query failed: no result" << std::endl;
+            }
+
             if (PQstatus(conn_) != CONNECTION_OK) {
                 PQclear(res);
                 res = nullptr;
             }
 
-            if (item.second) {
-                item.second(res);
+            if (item.callback) {
+                item.callback(res);
             } else {
                 PQclear(res);
             }

@@ -1,6 +1,8 @@
 #include "rabbitmq_manager.h"
 #include <iostream>
 
+#include "tools/json_tools.h"
+
 RabbitMQManager::RabbitMQManager(const std::map<std::string, std::string>& config)
     : config_(config), running_(true) {
     handler_ = new AMQP::LibBoostAsioHandler(ioc_);
@@ -9,7 +11,7 @@ RabbitMQManager::RabbitMQManager(const std::map<std::string, std::string>& confi
     thread_ = std::thread([this]() { ioc_.run(); });
     // Запускаем обработку очереди публикаций в отдельном потоке
     publish_thread_ = std::thread([this]() { process_queue(); });
-    start_consuming();
+
 }
 
 RabbitMQManager::~RabbitMQManager() {
@@ -48,7 +50,7 @@ void RabbitMQManager::connect() {
     // Объявляем exchange и очередь для swag с перезапуском потребителя
     channel_->declareExchange("swag_exchange", AMQP::direct)
         .onSuccess([this]() {
-            channel_->declareQueue("swag")
+            channel_->declareQueue("swag", AMQP::durable)
                 .onSuccess([this](const std::string& name, uint32_t, uint32_t) {
                     channel_->bindQueue("swag_exchange", name, "swag_routing_key")
                         .onSuccess([this]() {
@@ -106,9 +108,15 @@ void RabbitMQManager::setup_consumer() {
     // Используем ссылку, чтобы избежать копирования
     auto& consumer = channel_->consume("swag");
     consumer.onReceived([this](const AMQP::Message &message, uint64_t deliveryTag, bool) {
+        std::string body(message.body(), message.bodySize());
         try {
-            std::string body(message.body(), message.bodySize());
-            liid(body); // Вызов пользовательской функции
+            liid(body);
+            auto json = parse_rabbitmq_message(body);
+            std::string type = json.get<std::string>("type_message", "other");
+
+            std::lock_guard<std::mutex> lock(queue_mutex_);
+            message_queues_[type].push_back(std::move(json));
+            queue_cv_.notify_all();
             channel_->ack(deliveryTag);
         } catch (const std::exception& e) {
             std::cerr << "Message handling error: " << e.what() << std::endl;
@@ -125,4 +133,52 @@ void RabbitMQManager::setup_consumer() {
 
 void RabbitMQManager::start_consuming() {
     ioc_.post([this] { setup_consumer(); });
+}
+
+std::optional<boost::property_tree::ptree> RabbitMQManager::wait_for_response(
+    const std::string& type,
+    std::chrono::seconds timeout,
+    const std::map<std::string, std::string>& filters)
+{
+    const auto start_time = std::chrono::steady_clock::now();
+    std::unique_lock<std::mutex> lock(queue_mutex_);
+
+    const std::string queue_key = type.empty() ? "other" : type;
+
+
+    while (std::chrono::steady_clock::now() - start_time < timeout) {
+        auto& queue = message_queues_[queue_key];
+        // Используем индекс для быстрого доступа
+        for (auto it = queue.begin(); it != queue.end();) {
+            try {
+                // Проверка фильтров
+                bool match = true;
+                for (const auto& [key, value] : filters) {
+                    if (it->get<std::string>(key) != value) {
+                        match = false;
+                        break;
+                    }
+                }
+
+                if (match) {
+                    auto message = *it;
+                    it = queue.erase(it); // Безопасное удаление
+                    return message;
+                }
+                ++it;
+
+            } catch (const std::exception& e) {
+                // Удаляем поврежденные сообщения
+                it = queue.erase(it);
+                std::cerr << "Malformed message removed: " << e.what() << std::endl;
+            }
+        }
+
+        // Ожидание с минимальной блокировкой
+        if (queue_cv_.wait_for(lock, timeout) == std::cv_status::timeout) {
+            break;
+        }
+    }
+
+    return std::nullopt;
 }
