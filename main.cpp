@@ -653,7 +653,7 @@ int main() {
         DatabaseInitializer::instance().register_model(credit_model);
 
         db::DatabaseManager db(config);
-        RabbitMQManager rabbitmq(config);
+        RabbitMQManager rabbitmq(config, db);
         db.start();
 
 

@@ -50,3 +50,43 @@
 //         std::cerr << "Error: " << e.what() << std::endl;
 //     }
 // }
+#include <iostream>
+
+enum class PaymentType { ANNUITY, DIFFERENTIATED };
+
+double calculate_annuity_payment(double remaining_debt, double annual_rate) {
+    double monthly_rate = (annual_rate / 100.0) / 12.0;
+    return remaining_debt * monthly_rate;  // Упрощённая версия без срока
+}
+
+double calculate_differentiated_payment(double remaining_debt, double annual_rate) {
+    double monthly_rate = (annual_rate / 100.0) / 12.0;
+    return remaining_debt * monthly_rate;  // Только проценты за месяц
+}
+
+int main() {
+    double initial_amount, remaining_debt, annual_rate;
+    int payment_choice;
+
+    std::cout << "Введите начальную сумму кредита: ";
+    std::cin >> initial_amount;
+    std::cout << "Введите оставшийся долг: ";
+    std::cin >> remaining_debt;
+    std::cout << "Введите годовую процентную ставку (%): ";
+    std::cin >> annual_rate;
+
+    std::cout << "Выберите тип платежа (1 - аннуитетный, 2 - дифференцированный): ";
+    std::cin >> payment_choice;
+
+    if (payment_choice == 1) {
+        double annuity_payment = calculate_annuity_payment(remaining_debt, annual_rate);
+        std::cout << "Аннуитетный платеж (без учёта срока): " << annuity_payment << std::endl;
+    } else if (payment_choice == 2) {
+        double diff_payment = calculate_differentiated_payment(remaining_debt, annual_rate);
+        std::cout << "Дифференцированный платеж (проценты за месяц): " << diff_payment << std::endl;
+    } else {
+        std::cout << "Ошибка: неверный тип платежа!" << std::endl;
+    }
+
+    return 0;
+}

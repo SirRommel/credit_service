@@ -85,6 +85,7 @@ namespace endpoints {
             std::string employee_id = pt.get<std::string>("employee_id");
             std::string name = pt.get<std::string>("name");
             double interest_rate = pt.get<double>("interest_rate");
+            int months_count = pt.get<double>("months_count");
 
             // Валидация
             if (interest_rate < 0 || interest_rate > 100) {
@@ -95,11 +96,12 @@ namespace endpoints {
             std::promise<PGresult*> promise;
             auto future = promise.get_future();
             std::string interest_rate_str = std::to_string(interest_rate);
-            const char* params[] = {employee_id.c_str(), name.c_str(), interest_rate_str.c_str()};
+            std::string months_count_str = std::to_string(months_count);
+            const char* params[] = {employee_id.c_str(), name.c_str(), interest_rate_str.c_str(), months_count_str.c_str()};
             db_.async_query_params(
-                "INSERT INTO tariffs (employee_id, name, interest_rate) VALUES ($1, $2, $3) RETURNING id",
+                "INSERT INTO tariffs (employee_id, name, interest_rate, months_count) VALUES ($1, $2, $3, $4) RETURNING id",
                 params,
-                3,
+                4,
                 [&](PGresult* res) { promise.set_value(res); }
             );
 
@@ -145,11 +147,12 @@ namespace endpoints {
                     tariff.put("employee_id", PQgetvalue(res, i, 1));
                     tariff.put("name", PQgetvalue(res, i, 2));
                     tariff.put("interest_rate", PQgetvalue(res, i, 3));
+                    tariff.put("months_count", PQgetvalue(res, i, 4));
                     tariffs.push_back(std::make_pair("", tariff));
                 }
 
                 PQclear(res);
-                pt.add_child("tariffs", tariffs);
+                pt.add_child("tariff", tariffs);
 
                 std::ostringstream oss;
                 boost::property_tree::write_json(oss, pt);
@@ -212,6 +215,13 @@ namespace endpoints {
                         throw std::invalid_argument("Interest rate must be between 0 and 100");
                     }
                     updates.push_back("interest_rate = " + std::to_string(rate));
+                }
+                if (pt.count("months_count")) {
+                    double count = pt.get<double>("months_count");
+                    if (count < 0 ) {
+                        throw std::invalid_argument("Interest rate must be between 0 and LIID");
+                    }
+                    updates.push_back("months_count = " + std::to_string(count));
                 }
 
                 if (updates.empty()) {

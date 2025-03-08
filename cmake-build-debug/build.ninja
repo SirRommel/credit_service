@@ -145,6 +145,14 @@ build CMakeFiles/credit_service.dir/src/endpoints/credit_endpoint.cpp.o: CXX_COM
   OBJECT_DIR = CMakeFiles/credit_service.dir
   OBJECT_FILE_DIR = CMakeFiles/credit_service.dir/src/endpoints
 
+build CMakeFiles/credit_service.dir/src/rabbit_mq/rabbit_db_operations.cpp.o: CXX_COMPILER__credit_service_unscanned_Debug /home/rommel/projects/credit_service/src/rabbit_mq/rabbit_db_operations.cpp || cmake_object_order_depends_target_credit_service
+  DEFINES = -DBOOST_ATOMIC_DYN_LINK -DBOOST_ATOMIC_NO_LIB -DBOOST_FILESYSTEM_DYN_LINK -DBOOST_FILESYSTEM_NO_LIB -DBOOST_SYSTEM_DYN_LINK -DBOOST_SYSTEM_NO_LIB
+  DEP_FILE = CMakeFiles/credit_service.dir/src/rabbit_mq/rabbit_db_operations.cpp.o.d
+  FLAGS = -std=c++20 -fdiagnostics-color=always
+  INCLUDES = -I/usr/include/postgresql -I/home/rommel/projects/credit_service/src
+  OBJECT_DIR = CMakeFiles/credit_service.dir
+  OBJECT_FILE_DIR = CMakeFiles/credit_service.dir/src/rabbit_mq
+
 
 # =============================================================================
 # Link build statements for EXECUTABLE target credit_service
@@ -153,7 +161,7 @@ build CMakeFiles/credit_service.dir/src/endpoints/credit_endpoint.cpp.o: CXX_COM
 #############################################
 # Link the executable credit_service
 
-build credit_service: CXX_EXECUTABLE_LINKER__credit_service_Debug CMakeFiles/credit_service.dir/main.cpp.o CMakeFiles/credit_service.dir/src/tools/json_tools.cpp.o CMakeFiles/credit_service.dir/src/tools/utils.cpp.o CMakeFiles/credit_service.dir/src/app.cpp.o CMakeFiles/credit_service.dir/src/errors/http_errors.cpp.o CMakeFiles/credit_service.dir/src/endpoints/time_endpoint.cpp.o CMakeFiles/credit_service.dir/src/db/database_manager.cpp.o CMakeFiles/credit_service.dir/src/endpoints/tariff_endpoint.cpp.o CMakeFiles/credit_service.dir/src/endpoints/credit_limit_endpoint.cpp.o CMakeFiles/credit_service.dir/src/rabbit_mq/rabbitmq_manager.cpp.o CMakeFiles/credit_service.dir/src/endpoints/test_rabbit_endpoint.cpp.o CMakeFiles/credit_service.dir/src/endpoints/credit_endpoint.cpp.o | /usr/lib/x86_64-linux-gnu/libboost_system.so.1.83.0 /usr/lib/x86_64-linux-gnu/libboost_filesystem.so.1.83.0 /usr/lib/x86_64-linux-gnu/libpq.so /usr/lib/libamqpcpp.so /usr/lib/x86_64-linux-gnu/libboost_atomic.so.1.83.0
+build credit_service: CXX_EXECUTABLE_LINKER__credit_service_Debug CMakeFiles/credit_service.dir/main.cpp.o CMakeFiles/credit_service.dir/src/tools/json_tools.cpp.o CMakeFiles/credit_service.dir/src/tools/utils.cpp.o CMakeFiles/credit_service.dir/src/app.cpp.o CMakeFiles/credit_service.dir/src/errors/http_errors.cpp.o CMakeFiles/credit_service.dir/src/endpoints/time_endpoint.cpp.o CMakeFiles/credit_service.dir/src/db/database_manager.cpp.o CMakeFiles/credit_service.dir/src/endpoints/tariff_endpoint.cpp.o CMakeFiles/credit_service.dir/src/endpoints/credit_limit_endpoint.cpp.o CMakeFiles/credit_service.dir/src/rabbit_mq/rabbitmq_manager.cpp.o CMakeFiles/credit_service.dir/src/endpoints/test_rabbit_endpoint.cpp.o CMakeFiles/credit_service.dir/src/endpoints/credit_endpoint.cpp.o CMakeFiles/credit_service.dir/src/rabbit_mq/rabbit_db_operations.cpp.o | /usr/lib/x86_64-linux-gnu/libboost_system.so.1.83.0 /usr/lib/x86_64-linux-gnu/libboost_filesystem.so.1.83.0 /usr/lib/x86_64-linux-gnu/libpq.so /usr/lib/libamqpcpp.so /usr/lib/x86_64-linux-gnu/libboost_atomic.so.1.83.0
   LINK_LIBRARIES = /usr/lib/x86_64-linux-gnu/libboost_system.so.1.83.0  /usr/lib/x86_64-linux-gnu/libboost_filesystem.so.1.83.0  /usr/lib/x86_64-linux-gnu/libpq.so  /usr/lib/libamqpcpp.so  -lpthread  -lssl  -lcrypto  /usr/lib/x86_64-linux-gnu/libboost_atomic.so.1.83.0
   OBJECT_DIR = CMakeFiles/credit_service.dir
   POST_BUILD = :

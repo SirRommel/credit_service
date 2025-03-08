@@ -15,7 +15,8 @@ public:
             "user_id UUID NOT NULL",
             "tariff_id UUID NOT NULL REFERENCES tariffs(id) ON DELETE CASCADE",
             "amount NUMERIC(15,2) NOT NULL CHECK (amount > 0)",
-            "write_off_account_id UUID"
+            "write_off_account_id UUID",
+            "remaining_debt NUMERIC(15,2) NOT NULL CHECK (amount > 0)"
         };
     }
 };

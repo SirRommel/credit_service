@@ -3,6 +3,7 @@
 #include <sstream>
 #include <iostream>
 #include <map>
+#include <regex>
 
 
 
@@ -29,4 +30,15 @@ std::map<std::string, std::string> read_env_file(const std::string& filename) {
         }
     }
     return env_map;
+}
+
+std::string extract_id_from_path(const std::string& path) {
+    std::string uuid_regex_str = "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}";
+    std::regex uuid_pattern(uuid_regex_str);
+    std::smatch matches;
+
+    if (std::regex_search(path.begin(), path.end(), matches, uuid_pattern)) {
+        return matches.str();
+    }
+    return "";
 }
