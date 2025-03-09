@@ -7,8 +7,17 @@
 #include "models/db_models/tariff_model.h"
 #include "models/db_models/credit_history_model.h"
 #include "models/db_models/credit_model.h"
+#include <csignal>
+#include <atomic>
+std::atomic<bool> running{true};
+
+void signal_handler(int) {
+    running = false;
+}
 
 int main() {
+    signal(SIGINT, signal_handler);
+    signal(SIGTERM, signal_handler);
     try {
         auto config = read_env_file(".env");
 
@@ -27,6 +36,10 @@ int main() {
 
         App app(config, db, rabbitmq);
         app.run();
+
+        while (running) {
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+        }
 
         std::cin.get();
 

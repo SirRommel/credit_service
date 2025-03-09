@@ -6,7 +6,7 @@
 14	11427	1741521682925687883	CMakeFiles/credit_service.dir/src/endpoints/tariff_endpoint.cpp.o	5a0c09a87968d379
 24	11917	1741130791108229426	CMakeFiles/credit_service.dir/src/core/routers/rabbit_mq_handler.cpp.o	42d4b51c5ae60a8
 16	53	1741130791100229456	CMakeFiles/credit_service.dir/few.cpp.o	31ac8841e3a17f75
-6	90	1741534008158550904	build.ninja	f87487d8b0baeaa1
+6	90	1741537206874446908	build.ninja	f87487d8b0baeaa1
 15	7897	1741524610879410465	CMakeFiles/credit_service.dir/main.cpp.o	278bc472adad781b
 14	6034	1741521682925687883	CMakeFiles/credit_service.dir/src/db/database_manager.cpp.o	d908a83204813e95
 8	2919	1741274128531629437	CMakeFiles/credit_service.dir/src/errors/http_errors.cpp.o	74c5482adfd1de29
@@ -23,3 +23,15 @@
 16	7942	1741524610880410795	CMakeFiles/credit_service.dir/src/endpoints/test_rabbit_endpoint.cpp.o	ad0b972411a60217
 17	5801	1741524610881411124	CMakeFiles/credit_service.dir/src/rabbit_mq/rabbit_db_operations.cpp.o	d42dd3de019e91c2
 11	8269	1741138126969538563	CMakeFiles/credit_service.dir/src/rabbit_mq/rabbit_mq_worker.cpp.o	172ea43ccf7eae4c
+26	10554	1741537408275657253	CMakeFiles/credit_service.dir/src/rabbit_mq/rabbit_db_operations.cpp.o	d42dd3de019e91c2
+22	13121	1741537408271651835	CMakeFiles/credit_service.dir/src/endpoints/credit_limit_endpoint.cpp.o	9ba32f78e2d52bf7
+20	13372	1741537408269649126	CMakeFiles/credit_service.dir/src/tools/utils.cpp.o	ee5eaab6325c51c8
+20	14299	1741537408269649126	CMakeFiles/credit_service.dir/main.cpp.o	278bc472adad781b
+21	15296	1741537408270650480	CMakeFiles/credit_service.dir/src/endpoints/tariff_endpoint.cpp.o	5a0c09a87968d379
+25	15760	1741537408274655898	CMakeFiles/credit_service.dir/src/endpoints/test_rabbit_endpoint.cpp.o	ad0b972411a60217
+24	16198	1741537408273654544	CMakeFiles/credit_service.dir/src/rabbit_mq/rabbitmq_manager.cpp.o	352a4d06af1a0e0
+21	17824	1741537408270650480	CMakeFiles/credit_service.dir/src/app.cpp.o	1763f2ec0789d799
+25	18005	1741537408274655898	CMakeFiles/credit_service.dir/src/endpoints/credit_endpoint.cpp.o	54e21aa8127c9b8f
+18005	18394	1741537426255031145	credit_service	b5f36dac8f17f4a0
+12	5479	1741538037664256478	CMakeFiles/credit_service.dir/main.cpp.o	278bc472adad781b
+5479	5828	1741538043130274903	credit_service	b5f36dac8f17f4a0
