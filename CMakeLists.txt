@@ -15,17 +15,11 @@ if(NOT PostgreSQL_FOUND)
 endif()
 
 # Поиск заголовочных файлов AMQP-CPP
-find_path(AMQP_CPP_INCLUDE_DIR NAMES amqpcpp.h PATHS /usr/local/include /usr/include)
-if(NOT AMQP_CPP_INCLUDE_DIR)
-    message(FATAL_ERROR "AMQP-CPP headers not found")
-endif()
+set(AMQP_CPP_INCLUDE_DIR "/usr/local/include")
+set(AMQP_CPP_LIBRARY "/usr/local/lib/libamqpcpp.so")
 
-# Поиск библиотеки AMQP-CPP
-find_library(AMQP_CPP_LIBRARY NAMES amqpcpp PATHS /usr/local/lib /usr/lib)
-if(NOT AMQP_CPP_LIBRARY)
-    message(FATAL_ERROR "AMQP-CPP library not found")
-endif()
-
+include_directories(${Boost_INCLUDE_DIRS} ${PostgreSQL_INCLUDE_DIRS} ${AMQP_CPP_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/src)
+link_directories(${Boost_LIBRARY_DIRS} ${PostgreSQL_LIBRARY_DIRS} /usr/local/lib)
 
 # Добавление исполняемого файла
 add_executable(credit_service
@@ -65,20 +59,25 @@ add_executable(credit_service
 
 
 
-# Указание путей к заголовочным файлам
 target_include_directories(credit_service PRIVATE
         ${Boost_INCLUDE_DIRS}
         ${PostgreSQL_INCLUDE_DIRS}
         ${AMQP_CPP_INCLUDE_DIR}
-        ${CMAKE_CURRENT_SOURCE_DIR}/src  # Путь к модулям
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
-# Связывание библиотек
+# Линковка библиотек
 target_link_libraries(credit_service PRIVATE
         ${Boost_LIBRARIES}
         ${PostgreSQL_LIBRARIES}
         ${AMQP_CPP_LIBRARY}
         pthread
+        dl
         ssl
         crypto
+)
+
+# Исправление несоответствия типов
+target_compile_definitions(credit_service PRIVATE
+        BOOST_BIND_GLOBAL_PLACEHOLDERS  # Для совместимости с Boost.Bind
 )

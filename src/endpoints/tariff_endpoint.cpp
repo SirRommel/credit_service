@@ -9,6 +9,7 @@
 
 #include "../db/database_manager.h"
 #include "errors/http_errors.h"
+#include "tools/utils.h"
 
 namespace app {
 namespace endpoints {
@@ -23,7 +24,7 @@ namespace endpoints {
                 return res;
             }
             else if (req.method() == boost::beast::http::verb::get) {
-                std::string id = extract_id_from_path(req.target());
+                std::string id = extract_id_from_path(std::string(req.target()));
                 std::string result = get_all_tariffs(id);
                 boost::beast::http::response<boost::beast::http::string_body> res{boost::beast::http::status::ok, req.version()};
                 res.set(boost::beast::http::field::content_type, "application/json");
@@ -31,7 +32,7 @@ namespace endpoints {
                 return res;
             }
             else {
-                std::string id = extract_id_from_path(req.target());
+                std::string id = extract_id_from_path(std::string(req.target()));
                 if (id.empty()) {
                     return errors::create_error_response(
                         http::status::bad_request,
@@ -273,16 +274,6 @@ namespace endpoints {
             return "Tariff deleted successfully";
         }
 
-        std::string TariffEndpoint::extract_id_from_path(const std::string& path) {
-            std::string uuid_regex_str = "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}";
-            std::regex uuid_pattern(uuid_regex_str);
-            std::smatch matches;
-
-            if (std::regex_search(path.begin(), path.end(), matches, uuid_pattern)) {
-                return matches.str();
-            }
-            return "";
-        }
 
         } // namespace endpoints
 } // namespace app

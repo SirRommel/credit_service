@@ -1,16 +1,18 @@
 # ninja log v6
-25	2118	1741130791109229422	CMakeFiles/credit_service.dir/src/config/env_config.cpp.o	50823c508a1ca286
-6	90	1741526130533271552	build.ninja	f87487d8b0baeaa1
-16	53	1741130791100229456	CMakeFiles/credit_service.dir/few.cpp.o	31ac8841e3a17f75
-15	7897	1741524610879410465	CMakeFiles/credit_service.dir/main.cpp.o	278bc472adad781b
-24	11917	1741130791108229426	CMakeFiles/credit_service.dir/src/core/routers/rabbit_mq_handler.cpp.o	42d4b51c5ae60a8
+53	12332	1741130791137229314	CMakeFiles/credit_service.dir/src/rabbit_mq/rabbit_mq_task.cpp.o	79abc1b89464537f
+21	7038	1741130791105229437	CMakeFiles/credit_service.dir/src/core/task_queue.cpp.o	81e66bb90fd09a69
+15	11853	1741524610879410465	CMakeFiles/credit_service.dir/src/app.cpp.o	1763f2ec0789d799
 11853	12271	1741524622717808792	credit_service	b5f36dac8f17f4a0
 14	11427	1741521682925687883	CMakeFiles/credit_service.dir/src/endpoints/tariff_endpoint.cpp.o	5a0c09a87968d379
-15	11853	1741524610879410465	CMakeFiles/credit_service.dir/src/app.cpp.o	1763f2ec0789d799
-8	2919	1741274128531629437	CMakeFiles/credit_service.dir/src/errors/http_errors.cpp.o	74c5482adfd1de29
+24	11917	1741130791108229426	CMakeFiles/credit_service.dir/src/core/routers/rabbit_mq_handler.cpp.o	42d4b51c5ae60a8
+16	53	1741130791100229456	CMakeFiles/credit_service.dir/few.cpp.o	31ac8841e3a17f75
+6	90	1741534008158550904	build.ninja	f87487d8b0baeaa1
+15	7897	1741524610879410465	CMakeFiles/credit_service.dir/main.cpp.o	278bc472adad781b
 14	6034	1741521682925687883	CMakeFiles/credit_service.dir/src/db/database_manager.cpp.o	d908a83204813e95
-21	7038	1741130791105229437	CMakeFiles/credit_service.dir/src/core/task_queue.cpp.o	81e66bb90fd09a69
-53	12332	1741130791137229314	CMakeFiles/credit_service.dir/src/rabbit_mq/rabbit_mq_task.cpp.o	79abc1b89464537f
+8	2919	1741274128531629437	CMakeFiles/credit_service.dir/src/errors/http_errors.cpp.o	74c5482adfd1de29
+8	4438	1741272501086097949	CMakeFiles/credit_service.dir/src/endpoints/endpoint.cpp.o	1e7682088323057c
+15	10009	1741524610879410465	CMakeFiles/credit_service.dir/src/rabbit_mq/rabbitmq_manager.cpp.o	352a4d06af1a0e0
+25	2118	1741130791109229422	CMakeFiles/credit_service.dir/src/config/env_config.cpp.o	50823c508a1ca286
 38	8531	1741130791122229372	CMakeFiles/credit_service.dir/src/models/task.cpp.o	27241655499c02cb
 9	2899	1741274183360008587	CMakeFiles/credit_service.dir/src/endpoints/time_endpoint.cpp.o	5c9fd6103cdf44a7
 12	8181	1741138126970538560	CMakeFiles/credit_service.dir/src/core/routers/http_router.cpp.o	6ba2313832d4be39
@@ -21,5 +23,3 @@
 16	7942	1741524610880410795	CMakeFiles/credit_service.dir/src/endpoints/test_rabbit_endpoint.cpp.o	ad0b972411a60217
 17	5801	1741524610881411124	CMakeFiles/credit_service.dir/src/rabbit_mq/rabbit_db_operations.cpp.o	d42dd3de019e91c2
 11	8269	1741138126969538563	CMakeFiles/credit_service.dir/src/rabbit_mq/rabbit_mq_worker.cpp.o	172ea43ccf7eae4c
-8	4438	1741272501086097949	CMakeFiles/credit_service.dir/src/endpoints/endpoint.cpp.o	1e7682088323057c
-15	10009	1741524610879410465	CMakeFiles/credit_service.dir/src/rabbit_mq/rabbitmq_manager.cpp.o	352a4d06af1a0e0

@@ -4,6 +4,9 @@
 #include "endpoint.h"
 #include "../db/database_manager.h"
 #include <boost/beast/http.hpp>
+#include <string>
+#include <boost/beast.hpp>
+#include <string_view>
 
 namespace app {
     namespace endpoints {
@@ -32,7 +35,6 @@ namespace app {
             std::string get_all_tariffs(std::string id);
             std::string update_tariff(std::string id, const std::string& body);
             std::string delete_tariff(std::string id);
-            std::string extract_id_from_path(const std::string& path);
         };
 
     } // namespace endpoints

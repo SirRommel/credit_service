@@ -6,27 +6,15 @@
 #include "../tools/json_tools.h"
 #include <boost/algorithm/string.hpp>
 #include <regex>
-#include "../tools/json_tools.h"
+#include "../tools/utils.h"
 
 #include "errors/http_errors.h"
 
-std::string CreditLimitEndpoint::extract_user_id(const std::string& path) {
-    std::regex uuid_pattern(
-        "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
-    );
-    std::smatch matches;
-    std::string user_id = path.substr(path.rfind('/') + 1);
 
-    if (std::regex_match(user_id, matches, uuid_pattern)) {
-        return user_id;
-    }
-
-    return "";
-}
 
 boost::beast::http::response<boost::beast::http::string_body> CreditLimitEndpoint::handle(const boost::beast::http::request<boost::beast::http::string_body>& req) {
     try {
-        std::string user_id = extract_user_id(req.target());
+        std::string user_id = extract_id_from_path(std::string(req.target()));
         if (user_id.empty()) {
             return app::errors::create_error_response(
                 boost::beast::http::status::bad_request,

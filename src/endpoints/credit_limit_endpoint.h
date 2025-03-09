@@ -15,5 +15,4 @@ public:
 
 private:
     db::DatabaseManager& db_;
-    std::string extract_user_id(const std::string& path);
 };

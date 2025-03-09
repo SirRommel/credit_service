@@ -3,9 +3,10 @@ FROM ubuntu:22.04 AS builder
 
 WORKDIR /app
 
-# Установка зависимостей с правильными версиями Boost
+# Установка зависимостей с добавлением CMake
 RUN apt update && apt install -y \
     g++ \
+    cmake \
     libboost1.74-all-dev \
     libpq-dev \
     libssl-dev \
@@ -15,16 +16,17 @@ RUN apt update && apt install -y \
     wget \
     && rm -rf /var/lib/apt/lists/*
 
-RUN wget https://github.com/Kitware/CMake/releases/download/v3.30.0/cmake-3.30.0-linux-x86_64.sh \
-    && chmod +x cmake-3.30.0-linux-x86_64.sh \
-    && ./cmake-3.30.0-linux-x86_64.sh --prefix=/usr/local --exclude-subdir \
-    && rm cmake-3.30.0-linux-x86_64.sh
+RUN wget https://github.com/Kitware/CMake/releases/download/v3.30.0/cmake-3.30.0-linux-x86_64.sh && \
+    chmod +x cmake-3.30.0-linux-x86_64.sh && \
+    ./cmake-3.30.0-linux-x86_64.sh --prefix=/usr/local --exclude-subdir --skip-license
 
-
-# Сборка AMQP-CPP
-RUN git clone https://github.com/CopernicaMarketingSoftware/AMQP-CPP.git
-WORKDIR /app/AMQP-CPP
-RUN cmake . && make && make install
+# Сборка AMQP-CPP (только один раз)
+RUN git clone https://github.com/CopernicaMarketingSoftware/AMQP-CPP.git && \
+    cd AMQP-CPP && \
+    cmake . -DAMQP-CPP_BUILD_SHARED=ON -DAMQP-CPP_LINUX_TCP=ON && \
+    make && make install && \
+    ls -l /usr/local/include/amqpcpp.h && \
+    ls -l /usr/local/lib/libamqpcpp*
 
 # Копирование исходников проекта
 COPY . .

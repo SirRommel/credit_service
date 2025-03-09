@@ -43,7 +43,7 @@ CreditEndpoint::handle(const boost::beast::http::request<boost::beast::http::str
         }
 
         if (req.method() == boost::beast::http::verb::get) {
-            std::string id = extract_id_from_path(req.target());
+            std::string id = extract_id_from_path(std::string(req.target()));
             std::string result = get_credit(id);
             boost::beast::http::response<boost::beast::http::string_body> res{boost::beast::http::status::ok, req.version()};
             res.set(boost::beast::http::field::content_type, "application/json");
