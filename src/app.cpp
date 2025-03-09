@@ -51,7 +51,7 @@ App::App(const std::map<std::string, std::string>& config, db::DatabaseManager& 
     } catch (const std::exception& e) {
         std::cerr << "Failed to initialize server on "
                   << host << ":" << port << " - " << e.what() << std::endl;
-        throw; // Перебрасываем исключение
+        throw;
     }
 
 
@@ -98,7 +98,6 @@ void App::handle_request(tcp::socket socket, beast::flat_buffer buffer) {
     http::request<http::string_body> req;
     http::read(socket, buffer, req);
 
-    // Логирование запроса
     std::cout << "Received " << req.method()
               << " request for " << req.target() << std::endl;
 

@@ -6,8 +6,6 @@
 #include <regex>
 
 
-
-
 std::map<std::string, std::string> read_env_file(const std::string& filename) {
     std::map<std::string, std::string> env_map;
     std::ifstream file(filename);

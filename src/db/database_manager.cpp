@@ -27,12 +27,12 @@ namespace db {
     }
 
     DatabaseManager::~DatabaseManager() {
-        stop(); // Правильное завершение работы
+        stop();
     }
 
     void DatabaseManager::stop() {
         running_ = false;
-        work_.reset(); // Сброс work_guard
+        work_.reset();
         ioc_.stop();
         if (conn_) PQfinish(conn_);
         if (thread_.joinable()) thread_.join();

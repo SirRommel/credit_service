@@ -35,7 +35,6 @@ boost::beast::http::response<boost::beast::http::string_body> CreditLimitEndpoin
             );
         }
 
-        // Проверка существования записи и получение рейтинга
         std::promise<PGresult*> promise;
         const char* paramValues[] = {user_id.c_str()};
         db_.async_query_params(
@@ -53,7 +52,6 @@ boost::beast::http::response<boost::beast::http::string_body> CreditLimitEndpoin
 
         if (!exists) {
             std::cout << "FFFFFFFFFOWIOFIWO" << std::endl;
-            // Создаем новую запись с рейтингом 50
             std::promise<PGresult*> insert_promise;
             const char* insertParams[] = {user_id.c_str(), "50"};
             db_.async_query_params(
@@ -66,12 +64,11 @@ boost::beast::http::response<boost::beast::http::string_body> CreditLimitEndpoin
             PGresult* insert_res = insert_promise.get_future().get();
             PQclear(insert_res);
         } else {
-            // Получаем существующий рейтинг
             rating = std::stod(PQgetvalue(select_res, 0, 0));
         }
         PQclear(select_res);
 
-        // Формируем ответ
+
         double limit = rating * 1000;
         boost::property_tree::ptree pt;
         pt.put("limit", limit);

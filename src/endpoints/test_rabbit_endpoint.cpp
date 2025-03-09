@@ -16,11 +16,9 @@ namespace app {
             }
 
             try {
-                // Отправляем тестовое сообщение
                 std::string test_message = R"({"test": "Hello RabbitMQ!"})";
                 rabbitmq_.async_publish(test_message);
 
-                // Создаем JSON-ответ
                 boost::property_tree::ptree root;
                 root.put("status", "success");
                 root.put("message", "Message sent to RabbitMQ");
@@ -28,7 +26,6 @@ namespace app {
                 std::ostringstream oss;
                 boost::property_tree::write_json(oss, root);
 
-                // Формируем HTTP-ответ
                 boost::beast::http::response<boost::beast::http::string_body> res;
                 res.result(boost::beast::http::status::ok);
                 res.set(boost::beast::http::field::content_type, "application/json");

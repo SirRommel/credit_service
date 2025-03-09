@@ -46,7 +46,7 @@ void RabbitMQManager::connect() {
     connection_ = new AMQP::TcpConnection(handler_, AMQP::Address(host, port, login, vhost));
     channel_ = new AMQP::TcpChannel(connection_);
 
-    // Объявляем exchange и очередь для loan_requests
+    // Объявляем exchange и очередь для отправки сообщений
     channel_->declareExchange("loan_exchange", AMQP::direct)
         .onSuccess([this]() {
             channel_->declareQueue("loan_requests")
@@ -55,7 +55,7 @@ void RabbitMQManager::connect() {
                 });
         });
 
-    // Объявляем exchange и очередь для swag с перезапуском потребителя
+    // Объявляем exchange и очередь для слушанья
     channel_->declareExchange("swag_exchange", AMQP::direct)
         .onSuccess([this]() {
             channel_->declareQueue("swag", AMQP::durable)
@@ -97,7 +97,6 @@ void RabbitMQManager::process_queue() {
             channel_->publish("loan_exchange", "loan_routing_key", envelope);
         } catch (const std::exception& e) {
             std::cerr << "Publish error: " << e.what() << std::endl;
-            // Переподключаемся и повторяем попытку
             connect();
             std::this_thread::sleep_for(std::chrono::seconds(1));
             async_publish(message); // Повторная отправка
@@ -114,14 +113,12 @@ void RabbitMQManager::stop() {
 }
 void liid(const std::string& message) {
     std::cout << "Custom handler: " << message << std::endl;
-    // Ваша логика обработки сообщений
 }
 
 
 void RabbitMQManager::setup_consumer() {
     if (!channel_) return;
 
-    // Используем ссылку, чтобы избежать копирования
     auto& consumer = channel_->consume("swag");
     consumer.onReceived([this](const AMQP::Message &message, uint64_t deliveryTag, bool) {
         std::string body(message.body(), message.bodySize());
@@ -169,13 +166,12 @@ void RabbitMQManager::setup_consumer() {
             channel_->ack(deliveryTag);
         } catch (const std::exception& e) {
             std::cerr << "Message handling error: " << e.what() << std::endl;
-            // Используем reject с requeue = true
-            channel_->reject(deliveryTag, true); // Перемещаем сообщение в очередь повторной обработки
+            channel_->reject(deliveryTag, true);
         }
     });
     consumer.onError([this](const char *msg) {
         std::cerr << "Consumer error: " << msg << std::endl;
-        connect(); // Переподключаемся и перезапускаем потребителя
+        connect();
         ioc_.post([this] { setup_consumer(); });
     });
 }
@@ -300,7 +296,7 @@ void RabbitMQManager::add_credit_to_db(const auto& json) {
         "VALUES ($1, $2, $3, $4, $5)",
         paramValues,
         5,
-        [&](PGresult* res) { db_promise.set_value(res); } // Используем объявленный db_promise
+        [&](PGresult* res) { db_promise.set_value(res); }
     );
 
     PGresult* db_result = db_promise.get_future().get();
@@ -319,7 +315,7 @@ void RabbitMQManager::add_pay(const auto& json) {
         double amount = json.template get<double>("amount");
         bool success = json.template get<bool>("success", false);
 
-        // 1. Обновляем рейтинг в credit_history
+        // обновляем рейтинг в credit_history
         std::string update_rating_query =
             "UPDATE credit_history "
             "SET rating = CASE "
@@ -330,7 +326,7 @@ void RabbitMQManager::add_pay(const auto& json) {
 
         std::promise<PGresult*> rating_promise;
         const char* rating_params[] = {
-            success ? "true" : "false",  // PostgreSQL требует текстовое представление boolean
+            success ? "true" : "false",
             user_id.c_str()
         };
         db_.async_query_params(
@@ -347,14 +343,13 @@ void RabbitMQManager::add_pay(const auto& json) {
         }
         PQclear(rating_result);
 
-        // 2. Если успешный платеж - обновляем остаток долга
+        // если успешный платеж - обновляем остаток долга
         if (success) {
             std::string update_debt_query =
                 "UPDATE credits "
                 "SET remaining_debt = GREATEST(remaining_debt - $1, 0) "
                 "WHERE user_id = $2 AND remaining_debt >= $1";
 
-            // Исправление: форматирование числового значения
             std::string amount_str = std::to_string(amount);
 
             const char* debt_params[] = {
@@ -378,13 +373,12 @@ void RabbitMQManager::add_pay(const auto& json) {
             PQclear(debt_result);
         }
 
-        // 3. Логируем результат
         std::cout << "Processed payment for user " << user_id
                   << " (success: " << std::boolalpha << success << ")"
                   << std::endl;
 
     } catch (const std::exception& e) {
-        // 4. Обработка ошибок
+
         boost::property_tree::ptree error_json = json;
         error_json.put("error", e.what());
         error_json.put("status", "failed");
@@ -397,7 +391,6 @@ void RabbitMQManager::add_pay(const auto& json) {
 
 void RabbitMQManager::send_periodic_message() {
     try {
-        // 1. Получаем данные о кредитах из БД
         std::promise<PGresult*> db_promise;
         db_.async_query_params(
             "SELECT c.user_id, c.write_off_account_id, t.interest_rate, "
@@ -416,7 +409,7 @@ void RabbitMQManager::send_periodic_message() {
 
         int rows = PQntuples(db_result);
         for (int i = 0; i < rows; ++i) {
-            // 2. Парсим данные из БД
+            // парс данных из БД
             std::string user_id = PQgetvalue(db_result, i, 0);
             std::string account_id = PQgetvalue(db_result, i, 1);
             double interest_rate = std::stod(PQgetvalue(db_result, i, 2));
@@ -424,16 +417,13 @@ void RabbitMQManager::send_periodic_message() {
             double remaining_debt = std::stod(PQgetvalue(db_result, i, 4));
             int months = std::stoi(PQgetvalue(db_result, i, 5));
 
-            // 3. Рассчитываем сумму списания
-            // Пример: аннуитетный платёж
+            // рассчитать сумму списания
             double monthly_rate = interest_rate / 12 / 100;
             double payment = (total_amount * monthly_rate) /
                             (1 - std::pow(1 + monthly_rate, -months));
 
-            // Ограничиваем суммой остатка
             double amount = std::min(payment, remaining_debt);
 
-            // 4. Формируем JSON
             boost::property_tree::ptree json;
             json.put("user_id", user_id);
             json.put("amount", amount);

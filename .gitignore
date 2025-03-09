@@ -1,34 +1,53 @@
-# Prerequisites
-*.d
+# CLion и JetBrains
+.idea/
+cmake-build-*/
 
-# Compiled Object files
-*.slo
-*.lo
+# CMake
+CMakeCache.txt
+CMakeFiles/
+CMakeScripts/
+Testing/
+CTestTestfile.cmake
+Makefile
+cmake_install.cmake
+
+# Бинарные файлы и объектные файлы
 *.o
 *.obj
-
-# Precompiled Headers
-*.gch
-*.pch
-
-# Compiled Dynamic libraries
 *.so
-*.dylib
-*.dll
-
-# Fortran module files
-*.mod
-*.smod
-
-# Compiled Static libraries
-*.lai
-*.la
 *.a
 *.lib
-
-# Executables
-*.exe
+*.la
+*.lo
 *.out
-*.app
+*.exe
+*.dll
+*.dylib
 
-.env
+# Сборочные директории (если вручную создавались)
+build/
+bin/
+lib/
+
+# Логи и временные файлы
+*.log
+*.swp
+*.tmp
+*.bak
+*.pid
+*.seed
+
+# Файлы сборки Make и Ninja
+compile_commands.json
+CMakeUserPresets.json
+
+# Файлы gdb/lldb
+*.gch
+*.pch
+*.gcda
+*.gcno
+*.gcov
+*.lldb
+*.dSYM/
+*.profraw
+

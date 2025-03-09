@@ -28,7 +28,6 @@ namespace app {
         private:
             db::DatabaseManager& db_;
 
-            // Вспомогательные методы
             std::string create_tariff(const std::string& body);
             std::string get_all_tariffs(std::string id);
             std::string update_tariff(std::string id, const std::string& body);

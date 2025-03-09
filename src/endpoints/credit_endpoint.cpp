@@ -128,14 +128,12 @@ boost::beast::http::response<boost::beast::http::string_body> CreditEndpoint::cr
     boost::property_tree::write_json(mq_oss, message);
     rabbitmq_.async_publish(mq_oss.str());
 
-    // Wait for response
     auto response = rabbitmq_.wait_for_response(
         "creation_credit",
         60s,
         {{"user_id", user_id_str}}
     );
 
-    // Prepare HTTP response
     boost::beast::http::response<boost::beast::http::string_body> res;
     res.set(boost::beast::http::field::content_type, "application/json");
     if (!response) {
@@ -186,7 +184,6 @@ std::string CreditEndpoint::get_credit(std::string id) {
             throw std::runtime_error("Failed to fetch credits");
         }
 
-        // Формирование JSON
         boost::property_tree::ptree pt;
         boost::property_tree::ptree credits;
 
@@ -223,7 +220,6 @@ std::string CreditEndpoint::get_credit(std::string id) {
             throw std::runtime_error("Failed to fetch credits");
         }
 
-        // Формирование JSON
         boost::property_tree::ptree pt;
         boost::property_tree::ptree credits;
 

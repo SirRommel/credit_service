@@ -4,6 +4,7 @@ project(credit_service LANGUAGES CXX)
 # Установка флагов компиляции
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_EXTENSIONS OFF)
+file(COPY ${CMAKE_SOURCE_DIR}/.env DESTINATION ${CMAKE_BINARY_DIR})
 
 # Нахождение необходимых библиотек
 find_package(Boost REQUIRED COMPONENTS system filesystem)

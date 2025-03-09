@@ -21,7 +21,6 @@ namespace db {
         std::string get_last_error() const;
         void initialize_tables();
         PGconn* get_connection() const { return conn_; }
-        // Асинхронное выполнение запроса
 
         void async_query_params(
             const std::string& query,

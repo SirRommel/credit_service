@@ -77,7 +77,6 @@ namespace endpoints {
     }
 
         std::string TariffEndpoint::create_tariff(const std::string& body) {
-            // Парсинг JSON
             std::stringstream ss(body);
             boost::property_tree::ptree pt;
             boost::property_tree::read_json(ss, pt);
@@ -87,12 +86,10 @@ namespace endpoints {
             double interest_rate = pt.get<double>("interest_rate");
             int months_count = pt.get<double>("months_count");
 
-            // Валидация
             if (interest_rate < 0 || interest_rate > 100) {
                 throw std::invalid_argument("Interest rate must be between 0 and 100");
             }
 
-            // Вставка в БД
             std::promise<PGresult*> promise;
             auto future = promise.get_future();
             std::string interest_rate_str = std::to_string(interest_rate);
@@ -136,7 +133,6 @@ namespace endpoints {
                     throw std::runtime_error("Failed to fetch tariffs");
                 }
 
-                // Формирование JSON
                 boost::property_tree::ptree pt;
                 boost::property_tree::ptree tariffs;
 
@@ -172,7 +168,6 @@ namespace endpoints {
                     throw std::runtime_error("Failed to fetch tariffs");
                 }
 
-                // Формирование JSON
                 boost::property_tree::ptree pt;
                 boost::property_tree::ptree tariffs;
 
@@ -246,7 +241,6 @@ namespace endpoints {
                 }
                 query << " WHERE id = $" << (paramValues.size());
 
-                // Вызываем async_query_params
                 const char* params[paramValues.size()];
                 std::transform(paramValues.begin(), paramValues.end(), params, [](const std::string& s) { return s.c_str(); });
 

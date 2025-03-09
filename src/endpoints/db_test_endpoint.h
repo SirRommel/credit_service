@@ -19,14 +19,12 @@ public:
 
         PGresult* res = future.get();
 
-        // Проверка статуса результата
         if (!res || PQresultStatus(res) != PGRES_TUPLES_OK) {
             std::string error = res ? PQresultErrorMessage(res) : "Unknown database error";
             PQclear(res);
             throw std::runtime_error(error);
         }
 
-        // Проверка количества строк и столбцов
         int rows = PQntuples(res);
         int cols = PQnfields(res);
 
@@ -36,7 +34,7 @@ public:
         }
 
         std::string version = PQgetvalue(res, 0, 0);
-        PQclear(res); // Освобождаем ресурсы
+        PQclear(res);
 
         http::response<http::string_body> response{http::status::ok, req.version()};
         response.body() = "Database version: " + version;

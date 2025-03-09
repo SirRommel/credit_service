@@ -43,12 +43,11 @@ private:
     std::map<std::string, std::function<void(const boost::property_tree::ptree&)>> handlers_;
     std::mutex handlers_mutex_;
     db::DatabaseManager& db_;
-    std::map<std::string, std::deque<boost::property_tree::ptree>> message_queues_;
     std::map<std::string, std::deque<boost::property_tree::ptree>> processed_message_queues_;
     std::condition_variable queue_cv_;
     std::map<std::string, std::string> config_;
     std::thread thread_;
-    std::thread publish_thread_; // Отдельный поток для публикаций
+    std::thread publish_thread_;
     AMQP::LibBoostAsioHandler* handler_;
     AMQP::TcpConnection* connection_;
     AMQP::TcpChannel* channel_;
