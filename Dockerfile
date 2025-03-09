@@ -33,19 +33,20 @@ COPY . .
 RUN cmake -B build -DCMAKE_BUILD_TYPE=Release && cmake --build build
 
 # Стадия 2: Финальный образ
-FROM ubuntu:22.04
+#FROM ubuntu:22.04
+#
+#WORKDIR /app
+#
+#
+## Установка runtime-зависимостей
+#RUN apt update && apt install -y \
+#    libpq5 \
+#    libssl3 \
+#    libboost1.74-all-dev \
+#    libev4 \
+#    && rm -rf /var/lib/apt/lists/*
+#
+#COPY --from=builder /app/build/credit_service .
+COPY .env /app/build
 
-WORKDIR /app
-
-# Установка runtime-зависимостей
-RUN apt update && apt install -y \
-    libpq5 \
-    libssl3 \
-    libboost1.74-all-dev \
-    libev4 \
-    && rm -rf /var/lib/apt/lists/*
-
-COPY --from=builder /app/build/credit_service .
-COPY .env .
-
-ENTRYPOINT ["./credit_service"]
+ENTRYPOINT ["./build/credit_service"]
