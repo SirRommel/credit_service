@@ -8,6 +8,7 @@
 #include <mutex>
 #include <thread>
 #include <map>
+#include <optional>
 #include <boost/property_tree/ptree_fwd.hpp>
 
 #include "db/database_manager.h"

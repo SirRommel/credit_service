@@ -251,6 +251,9 @@ PostgreSQL_TYPE_INCLUDE_DIR:PATH=PostgreSQL_TYPE_INCLUDE_DIR-NOTFOUND
 //The directory containing a CMake configuration file for boost_algorithm.
 boost_algorithm_DIR:PATH=boost_algorithm_DIR-NOTFOUND
 
+//The directory containing a CMake configuration file for boost_asio.
+boost_asio_DIR:PATH=boost_asio_DIR-NOTFOUND
+
 //The directory containing a CMake configuration file for boost_atomic.
 boost_atomic_DIR:PATH=/usr/lib/x86_64-linux-gnu/cmake/boost_atomic-1.83.0
 

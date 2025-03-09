@@ -36,10 +36,6 @@ add_executable(credit_service
         src/tools/utils.cpp
         src/app.h
         src/app.cpp
-        src/handlers/endpoint_handler.h
-        src/handlers/time_endpoint.h
-        src/groups/time_group.h
-        src/groups/endpoint_group.h
         src/errors/http_errors.h
         src/errors/http_errors.cpp
         src/endpoints/endpoint.h
