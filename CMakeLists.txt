@@ -8,7 +8,7 @@ file(COPY ${CMAKE_SOURCE_DIR}/.env DESTINATION ${CMAKE_BINARY_DIR})
 
 # Нахождение необходимых библиотек
 find_package(Boost REQUIRED COMPONENTS system filesystem)
-find_package(PostgreSQL REQUIRED) # PostgreSQL
+find_package(PostgreSQL REQUIRED)
 
 if(NOT PostgreSQL_FOUND)
     message(FATAL_ERROR "PostgreSQL not found")
@@ -30,12 +30,6 @@ endif()
 # Добавление исполняемого файла
 add_executable(credit_service
         main.cpp
-#        src/core/task_queue.h
-#        src/core/task_queue.cpp
-#        src/core/routers/headers/http_router.h
-#        src/core/routers/http_router.cpp
-#        src/config/env_config.h
-#        src/config/env_config.cpp
         src/tools/json_tools.h
         src/tools/json_tools.cpp
         src/tools/utils.h
@@ -92,7 +86,3 @@ target_link_libraries(credit_service PRIVATE
         ssl
         crypto
 )
-
-# Вывод информации о PostgreSQL
-message(STATUS "PostgreSQL include dir: ${PostgreSQL_INCLUDE_DIRS}")
-message(STATUS "PostgreSQL libraries: ${PostgreSQL_LIBRARIES}")

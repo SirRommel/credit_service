@@ -24,6 +24,7 @@ public:
         const std::string& type,
         std::chrono::seconds timeout,
         const std::map<std::string, std::string>& filters);
+    std::map<std::string, std::string> config_;
 
 
 private:
@@ -45,7 +46,7 @@ private:
     db::DatabaseManager& db_;
     std::map<std::string, std::deque<boost::property_tree::ptree>> processed_message_queues_;
     std::condition_variable queue_cv_;
-    std::map<std::string, std::string> config_;
+
     std::thread thread_;
     std::thread publish_thread_;
     AMQP::LibBoostAsioHandler* handler_;

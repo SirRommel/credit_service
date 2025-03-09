@@ -35,3 +35,10 @@
 17	11869	1741521682928687985	CMakeFiles/credit_service.dir/src/endpoints/credit_endpoint.cpp.o	54e21aa8127c9b8f
 13	13045	1741521682925687883	CMakeFiles/credit_service.dir/src/app.cpp.o	1763f2ec0789d799
 13045	13508	1741521695957180616	credit_service	b5f36dac8f17f4a0
+17	5801	1741524610881411124	CMakeFiles/credit_service.dir/src/rabbit_mq/rabbit_db_operations.cpp.o	d42dd3de019e91c2
+15	7897	1741524610879410465	CMakeFiles/credit_service.dir/main.cpp.o	278bc472adad781b
+16	7942	1741524610880410795	CMakeFiles/credit_service.dir/src/endpoints/test_rabbit_endpoint.cpp.o	ad0b972411a60217
+15	10009	1741524610879410465	CMakeFiles/credit_service.dir/src/rabbit_mq/rabbitmq_manager.cpp.o	352a4d06af1a0e0
+16	11029	1741524610880410795	CMakeFiles/credit_service.dir/src/endpoints/credit_endpoint.cpp.o	54e21aa8127c9b8f
+15	11853	1741524610879410465	CMakeFiles/credit_service.dir/src/app.cpp.o	1763f2ec0789d799
+11853	12271	1741524622717808792	credit_service	b5f36dac8f17f4a0

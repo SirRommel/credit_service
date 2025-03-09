@@ -42,25 +42,34 @@ void RabbitMQManager::connect() {
     std::string password = config_.at("RABBITMQ_PASSWORD");
     std::string vhost = config_.at("RABBITMQ_VHOST");
 
+    std::string sending_exchange = config_.at("RABBITMQ_SENDING_EXCHANGE");
+    std::string sending_key = config_.at("RABBITMQ_SENDING_ROUTING_KEY");
+    std::string sending_queue = config_.at("RABBITMQ_SENDING_QUEUE");
+
+    std::string listening_exchange = config_.at("RABBITMQ_LISTENING_EXCHANGE");
+    std::string listening_key = config_.at("RABBITMQ_LISTENING_ROUTING_KEY");
+    std::string listening_queue = config_.at("RABBITMQ_LISTENING_QUEUE");
+
     AMQP::Login login(user, password);
     connection_ = new AMQP::TcpConnection(handler_, AMQP::Address(host, port, login, vhost));
     channel_ = new AMQP::TcpChannel(connection_);
 
     // Объявляем exchange и очередь для отправки сообщений
-    channel_->declareExchange("loan_exchange", AMQP::direct)
-        .onSuccess([this]() {
-            channel_->declareQueue("loan_requests")
-                .onSuccess([this](const std::string& name, uint32_t, uint32_t) {
-                    channel_->bindQueue("loan_exchange", name, "loan_routing_key");
+        channel_->declareExchange(sending_exchange, AMQP::direct)
+        .onSuccess([this, sending_queue, sending_exchange, sending_key]() {
+            channel_->declareQueue(sending_queue, AMQP::durable)
+                .onSuccess([this, sending_exchange, sending_key](const std::string& name, uint32_t, uint32_t) {
+                    channel_->bindQueue(sending_exchange, name, sending_key);
                 });
         });
 
+
     // Объявляем exchange и очередь для слушанья
-    channel_->declareExchange("swag_exchange", AMQP::direct)
-        .onSuccess([this]() {
-            channel_->declareQueue("swag", AMQP::durable)
-                .onSuccess([this](const std::string& name, uint32_t, uint32_t) {
-                    channel_->bindQueue("swag_exchange", name, "swag_routing_key")
+    channel_->declareExchange(listening_exchange, AMQP::direct)
+        .onSuccess([this, listening_queue, listening_exchange, listening_key]() {
+            channel_->declareQueue(listening_queue, AMQP::durable)
+                .onSuccess([this, listening_exchange, listening_key](const std::string& name, uint32_t, uint32_t) {
+                    channel_->bindQueue(listening_exchange, name, listening_key)
                         .onSuccess([this]() {
                             ioc_.post([this] { setup_consumer(); });
                         });
@@ -90,11 +99,13 @@ void RabbitMQManager::process_queue() {
         std::string message = message_queue_.front();
         message_queue_.pop();
         lock.unlock();
+        std::string sending_exchange = config_.at("RABBITMQ_SENDING_EXCHANGE");
+        std::string sending_key = config_.at("RABBITMQ_SENDING_ROUTING_KEY");
 
         try {
             AMQP::Envelope envelope(message.data(), message.size());
             envelope.setDeliveryMode(2); // persistent
-            channel_->publish("loan_exchange", "loan_routing_key", envelope);
+            channel_->publish(sending_exchange, sending_key, envelope);
         } catch (const std::exception& e) {
             std::cerr << "Publish error: " << e.what() << std::endl;
             connect();
@@ -118,8 +129,9 @@ void liid(const std::string& message) {
 
 void RabbitMQManager::setup_consumer() {
     if (!channel_) return;
+    std::string listening_queue = config_.at("RABBITMQ_LISTENING_QUEUE");
 
-    auto& consumer = channel_->consume("swag");
+    auto& consumer = channel_->consume(listening_queue);
     consumer.onReceived([this](const AMQP::Message &message, uint64_t deliveryTag, bool) {
         std::string body(message.body(), message.bodySize());
         try {
@@ -441,9 +453,9 @@ void RabbitMQManager::send_periodic_message() {
     } catch (const std::exception& e) {
         std::cerr << "Periodic processing error: " << e.what() << std::endl;
     }
-
+    int period = std::stoi(config_.at("ADD_PAY_TIMEOUT_SEC"));
     // Перезапуск таймера
-    periodic_timer_.expires_after(boost::asio::chrono::seconds(20));
+    periodic_timer_.expires_after(boost::asio::chrono::seconds(period));
     start_periodic_timer();
 }
 

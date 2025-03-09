@@ -127,10 +127,11 @@ boost::beast::http::response<boost::beast::http::string_body> CreditEndpoint::cr
     std::ostringstream mq_oss;
     boost::property_tree::write_json(mq_oss, message);
     rabbitmq_.async_publish(mq_oss.str());
-
+    int timeout_var = std::stoi(rabbitmq_.config_.at("CREATE_CREDIT_TIMEOUT_SEC"));
+    std::chrono::seconds timeout_chrono = std::chrono::seconds(timeout_var);
     auto response = rabbitmq_.wait_for_response(
         "creation_credit",
-        60s,
+        timeout_chrono,
         {{"user_id", user_id_str}}
     );
 
