@@ -1,27 +1,14 @@
 cmake_minimum_required(VERSION 3.30)
 project(credit_service LANGUAGES CXX)
 
-# Установка флагов компиляции
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_EXTENSIONS OFF)
-file(COPY ${CMAKE_SOURCE_DIR}/.env DESTINATION ${CMAKE_BINARY_DIR})
 
-# Нахождение необходимых библиотек
-find_package(Boost REQUIRED COMPONENTS system filesystem)
+# Поиск зависимостей
 find_package(PostgreSQL REQUIRED)
+find_package(Boost REQUIRED COMPONENTS system filesystem asio beast property_tree algorithm uuid)
 
-if(NOT PostgreSQL_FOUND)
-    message(FATAL_ERROR "PostgreSQL not found")
-endif()
-
-# Поиск заголовочных файлов AMQP-CPP
-set(AMQP_CPP_INCLUDE_DIR "/usr/local/include")
-set(AMQP_CPP_LIBRARY "/usr/local/lib/libamqpcpp.so")
-
-include_directories(${Boost_INCLUDE_DIRS} ${PostgreSQL_INCLUDE_DIRS} ${AMQP_CPP_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/src)
-link_directories(${Boost_LIBRARY_DIRS} ${PostgreSQL_LIBRARY_DIRS} /usr/local/lib)
-
-# Добавление исполняемого файла
+# Исполняемый файл
 add_executable(credit_service
         main.cpp
         src/tools/json_tools.h
@@ -57,27 +44,25 @@ add_executable(credit_service
 
 )
 
-
-
+# Настройка include
 target_include_directories(credit_service PRIVATE
-        ${Boost_INCLUDE_DIRS}
-        ${PostgreSQL_INCLUDE_DIRS}
-        ${AMQP_CPP_INCLUDE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
-# Линковка библиотек
+# Линковка
 target_link_libraries(credit_service PRIVATE
-        ${Boost_LIBRARIES}
-        ${PostgreSQL_LIBRARIES}
-        ${AMQP_CPP_LIBRARY}
-        pthread
-        dl
-        ssl
-        crypto
+        Boost::system
+        Boost::filesystem
+        Boost::asio
+        Boost::beast
+        Boost::property_tree
+        Boost::algorithm
+        Boost::uuid
+        PostgreSQL::PostgreSQL
+        amqpcpp
 )
 
-# Исправление несоответствия типов
+# Для совместимости с Boost.Bind
 target_compile_definitions(credit_service PRIVATE
-        BOOST_BIND_GLOBAL_PLACEHOLDERS  # Для совместимости с Boost.Bind
+        BOOST_BIND_GLOBAL_PLACEHOLDERS
 )

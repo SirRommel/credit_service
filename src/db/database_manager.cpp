@@ -31,11 +31,31 @@ namespace db {
     }
 
     void DatabaseManager::stop() {
-        running_ = false;
-        work_.reset();
-        ioc_.stop();
-        if (conn_) PQfinish(conn_);
-        if (thread_.joinable()) thread_.join();
+        try {
+            std::lock_guard<std::mutex> lock(queue_mutex_);
+            while (!query_queue_.empty()) {
+                query_queue_.pop();
+            }
+            std::cout << "Stopping DatabaseManager..." << std::endl;
+            running_ = false;
+            work_.reset();
+            ioc_.stop();        // Принудительная остановка цикла
+
+            // Сначала завершаем поток, чтобы избежать обращения к conn_
+            if (thread_.joinable()) {
+                thread_.join();
+                std::cout << "Database thread joined." << std::endl;
+            }
+
+            // Теперь безопасно закрываем соединение
+            if (conn_) {
+                PQfinish(conn_);
+                conn_ = nullptr;
+            }
+            std::cout << "Database stopped." << std::endl;
+        } catch (std::exception& e) {
+            std::cerr << "Error: " << e.what() << std::endl;
+        }
     }
 
     void DatabaseManager::connect() {
@@ -50,7 +70,6 @@ namespace db {
             std::cerr << "Connection failed: " << PQerrorMessage(conn_) << std::endl;
             PQfinish(conn_);
             conn_ = nullptr;
-            stop();
             return;
         }
         else {
@@ -99,7 +118,7 @@ namespace db {
             }
         }
 
-        while (!query_queue_.empty()) {
+        while (running_ && !query_queue_.empty()) {
             QueryItem item = std::move(query_queue_.front());
             query_queue_.pop();
             lock.unlock();
