@@ -11,8 +11,12 @@
 #include <atomic>
 std::atomic<bool> running{true};
 
+std::mutex mtx;
+std::condition_variable cv;
+
 void signal_handler(int) {
     running = false;
+    cv.notify_one();
 }
 
 int main() {
@@ -37,15 +41,14 @@ int main() {
         App app(config, db, rabbitmq);
         app.run();
 
-        while (running) {
-            std::this_thread::sleep_for(std::chrono::seconds(1));
-        }
+        std::unique_lock<std::mutex> lock(mtx);
+        cv.wait(lock, [] { return !running.load(); });
 
-        std::cin.get();
 
-        app.stop();
-        db.stop();
-        rabbitmq.stop();
+        // app.stop();
+        // rabbitmq.stop();
+        // db.stop();
+
     } catch (std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;
         return 1;

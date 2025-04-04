@@ -22,17 +22,29 @@ RabbitMQManager::RabbitMQManager(const std::map<std::string, std::string>& confi
 }
 
 RabbitMQManager::~RabbitMQManager() {
-    stop();
-    delete channel_;
-    delete connection_;
-    delete handler_;
-    if (thread_.joinable()) {
-        thread_.join();
+    try {
+        running_ = false;
+        periodic_timer_.cancel();
+        cv_.notify_all();
+        ioc_.stop();
+        if (thread_.joinable()) thread_.join();
+        if (publish_thread_.joinable()) publish_thread_.join();
+        delete channel_;
+        delete connection_;
+        delete handler_;
+        std::cout << std::endl << "RabbitMQ manager stoped." << std::endl;
+    } catch (std::exception& e) {
+        std::cerr << "Error: " << e.what() << std::endl;
     }
-    if (publish_thread_.joinable()) {
-        publish_thread_.join();
-    }
+}
+
+void RabbitMQManager::stop() {
+    running_ = false;
     periodic_timer_.cancel();
+    cv_.notify_all();
+    ioc_.stop();
+    if (thread_.joinable()) thread_.join();
+    if (publish_thread_.joinable()) publish_thread_.join();
 }
 
 void RabbitMQManager::connect() {
@@ -115,13 +127,7 @@ void RabbitMQManager::process_queue() {
     }
 }
 
-void RabbitMQManager::stop() {
-    running_ = false;
-    cv_.notify_all();
-    ioc_.stop();
-    if (thread_.joinable()) thread_.join();
-    if (publish_thread_.joinable()) publish_thread_.join();
-}
+
 void liid(const std::string& message) {
     std::cout << "Custom handler: " << message << std::endl;
 }
