@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.30)
+cmake_minimum_required(VERSION 3.28)
 project(credit_service LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
@@ -6,7 +6,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 # Поиск зависимостей
 find_package(PostgreSQL REQUIRED)
-find_package(Boost REQUIRED COMPONENTS system filesystem asio beast property_tree algorithm uuid)
+find_package(Boost REQUIRED COMPONENTS system filesystem)
 
 # Исполняемый файл
 add_executable(credit_service
@@ -53,11 +53,6 @@ target_include_directories(credit_service PRIVATE
 target_link_libraries(credit_service PRIVATE
         Boost::system
         Boost::filesystem
-        Boost::asio
-        Boost::beast
-        Boost::property_tree
-        Boost::algorithm
-        Boost::uuid
         PostgreSQL::PostgreSQL
         amqpcpp
 )
