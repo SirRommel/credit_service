@@ -80,10 +80,6 @@ void RabbitMQManager::connect() {
     connection_ = new AMQP::TcpConnection(handler_, AMQP::Address(host, port, login, vhost));
     channel_ = new AMQP::TcpChannel(connection_);
 
-    connection_->onError([this](const char* msg) {
-        std::cerr << "Connection error: " << msg << std::endl;
-        reconnect();
-    });
 
     // Обработчик ошибок канала
     channel_->onError([this](const char* msg) {
