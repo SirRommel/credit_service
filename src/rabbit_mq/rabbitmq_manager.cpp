@@ -88,7 +88,7 @@ void RabbitMQManager::connect() {
     });
 
     // Для отправки
-    channel_->declareExchange(sending_exchange, AMQP::direct)
+    channel_->declareExchange(sending_exchange, AMQP::direct, AMQP::durable)
             .onSuccess([this, sending_queue, sending_exchange, sending_key]() {
                 channel_->declareQueue(sending_queue, AMQP::durable)
                         .onSuccess([this, sending_exchange, sending_key](const std::string& name, uint32_t, uint32_t) {
@@ -106,7 +106,7 @@ void RabbitMQManager::connect() {
             });
 
     // Для приема
-    channel_->declareExchange(listening_exchange, AMQP::direct)
+    channel_->declareExchange(listening_exchange, AMQP::direct, AMQP::durable)
             .onSuccess([this, listening_queue, listening_exchange, listening_key]() {
                 channel_->declareQueue(listening_queue, AMQP::durable)
                         .onSuccess([this, listening_exchange, listening_key](const std::string& name, uint32_t, uint32_t) {
