@@ -38,6 +38,19 @@ RabbitMQManager::~RabbitMQManager() {
     }
 }
 
+void RabbitMQManager::reconnect() {
+
+    if (reconnecting_) return;
+    reconnecting_ = true;
+    std::cout << "Reconnecting in 5 seconds..." << std::endl;
+    ioc_.post([this] {
+        delete channel_;
+        delete connection_;
+        connect();
+        reconnecting_ = false;
+    });
+}
+
 void RabbitMQManager::stop() {
     running_ = false;
     periodic_timer_.cancel();
@@ -46,6 +59,7 @@ void RabbitMQManager::stop() {
     if (thread_.joinable()) thread_.join();
     if (publish_thread_.joinable()) publish_thread_.join();
 }
+
 
 void RabbitMQManager::connect() {
     std::string host = config_.at("RABBITMQ_HOST");
@@ -66,27 +80,55 @@ void RabbitMQManager::connect() {
     connection_ = new AMQP::TcpConnection(handler_, AMQP::Address(host, port, login, vhost));
     channel_ = new AMQP::TcpChannel(connection_);
 
-    // Объявляем exchange и очередь для отправки сообщений
-        channel_->declareExchange(sending_exchange, AMQP::direct)
-        .onSuccess([this, sending_queue, sending_exchange, sending_key]() {
-            channel_->declareQueue(sending_queue, AMQP::durable)
-                .onSuccess([this, sending_exchange, sending_key](const std::string& name, uint32_t, uint32_t) {
-                    channel_->bindQueue(sending_exchange, name, sending_key);
-                });
-        });
+    connection_->onError([this](const char* msg) {
+        std::cerr << "Connection error: " << msg << std::endl;
+        reconnect();
+    });
 
+    // Обработчик ошибок канала
+    channel_->onError([this](const char* msg) {
+        std::cerr << "Channel error: " << msg << std::endl;
+        reconnect();
+    });
 
-    // Объявляем exchange и очередь для слушанья
-    channel_->declareExchange(listening_exchange, AMQP::direct)
-        .onSuccess([this, listening_queue, listening_exchange, listening_key]() {
-            channel_->declareQueue(listening_queue, AMQP::durable)
-                .onSuccess([this, listening_exchange, listening_key](const std::string& name, uint32_t, uint32_t) {
-                    channel_->bindQueue(listening_exchange, name, listening_key)
-                        .onSuccess([this]() {
-                            ioc_.post([this] { setup_consumer(); });
+    // Для отправки
+    channel_->declareExchange(sending_exchange, AMQP::direct)
+            .onSuccess([this, sending_queue, sending_exchange, sending_key]() {
+                channel_->declareQueue(sending_queue, AMQP::durable)
+                        .onSuccess([this, sending_exchange, sending_key](const std::string& name, uint32_t, uint32_t) {
+                            channel_->bindQueue(sending_exchange, name, sending_key)
+                                    .onError([](const char* msg) {
+                                        std::cerr << "Bind error (send): " << msg << std::endl;
+                                    });
+                        })
+                        .onError([](const char* msg) {
+                            std::cerr << "Queue declare error (send): " << msg << std::endl;
                         });
-                });
-        });
+            })
+            .onError([](const char* msg) {
+                std::cerr << "Exchange declare error (send): " << msg << std::endl;
+            });
+
+    // Для приема
+    channel_->declareExchange(listening_exchange, AMQP::direct)
+            .onSuccess([this, listening_queue, listening_exchange, listening_key]() {
+                channel_->declareQueue(listening_queue, AMQP::durable)
+                        .onSuccess([this, listening_exchange, listening_key](const std::string& name, uint32_t, uint32_t) {
+                            channel_->bindQueue(listening_exchange, name, listening_key)
+                                    .onSuccess([this]() {
+                                        ioc_.post([this] { setup_consumer(); });
+                                    })
+                                    .onError([](const char* msg) {
+                                        std::cerr << "Bind error (listen): " << msg << std::endl;
+                                    });
+                        })
+                        .onError([](const char* msg) {
+                            std::cerr << "Queue declare error (listen): " << msg << std::endl;
+                        });
+            })
+            .onError([](const char* msg) {
+                std::cerr << "Exchange declare error (listen): " << msg << std::endl;
+            });
 }
 
 void RabbitMQManager::start_periodic_timer() {
@@ -186,7 +228,8 @@ void RabbitMQManager::setup_consumer() {
             std::cerr << "Message handling error: " << e.what() << std::endl;
             channel_->reject(deliveryTag, true);
         }
-    });
+    }
+    );
     consumer.onError([this](const char *msg) {
         std::cerr << "Consumer error: " << msg << std::endl;
         connect();

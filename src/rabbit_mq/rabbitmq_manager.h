@@ -30,6 +30,7 @@ public:
 
 private:
     void connect();
+    void reconnect();
     void setup_consumer();
     void process_queue();
     void add_credit_to_db(const auto& json);
@@ -39,7 +40,7 @@ private:
     void send_periodic_message();
     void start_periodic_timer();
 
-
+    bool reconnecting_;
     boost::asio::io_context ioc_;
     boost::asio::steady_timer periodic_timer_;
     std::map<std::string, std::function<void(const boost::property_tree::ptree&)>> handlers_;
