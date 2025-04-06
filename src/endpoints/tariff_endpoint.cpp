@@ -249,7 +249,7 @@ namespace endpoints {
                     updates.push_back("interest_rate = " + std::to_string(rate));
                 }
                 if (pt.count("months_count")) {
-                    double count = pt.get<double>("months_count");
+                    int count = pt.get<int>("months_count");
                     if (count < 0 ) {
                         throw std::invalid_argument("Interest rate must be between 0 and LIID");
                     }
