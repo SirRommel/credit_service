@@ -44,6 +44,8 @@ add_executable(credit_service
         src/models/db_models/credit_payment_model.h
         src/endpoints/credit_history.h
         src/endpoints/credit_history.cpp
+        src/endpoints/credits_endpoint.h
+        src/endpoints/credits_endpoint.cpp
         
 )
 
