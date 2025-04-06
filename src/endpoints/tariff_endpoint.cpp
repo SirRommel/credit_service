@@ -111,8 +111,12 @@ namespace endpoints {
 
             std::string new_id = PQgetvalue(res, 0, 0);
             PQclear(res);
+            boost::property_tree::ptree response;
+            response.put("tariff_id", new_id);
 
-            return "Tariff created with ID: " + new_id;
+            std::ostringstream json;
+            boost::property_tree::write_json(json, response, false);
+            return json.str();
         }
 
         std::string TariffEndpoint::get_all_tariffs(std::string id) {
@@ -187,8 +191,6 @@ namespace endpoints {
 
                 boost::property_tree::ptree pt;
                 boost::property_tree::ptree tariffs;
-                std::ostringstream oss;
-                oss << "{\n  \"tariffs\": [";
 
                 int rows = PQntuples(res);
                 for (int i = 0; i < rows; ++i) {
@@ -200,19 +202,20 @@ namespace endpoints {
                     interestRate = std::round(interestRate * 100) / 100;
                     tariff.put("interest_rate", interestRate);
                     tariffs.push_back(std::make_pair("", tariff));
-
-                    oss << "\n    {\n";
-                    oss << "      \"id\": \"" << PQgetvalue(res, i, 0) << "\",\n";
-                    oss << "      \"name\": \"" << PQgetvalue(res, i, 2) << "\",\n";
-                    oss << "      \"interest_rate\": " << interestRate << "\n";
-                    oss << "    }";
                 }
 
                 PQclear(res);
+                pt.add_child("tariffs", tariffs);
 
-                oss << "\n  ]\n}";
-                std::cout << oss.str() << std::endl;
-                return oss.str();
+                std::ostringstream oss;
+                boost::property_tree::write_json(oss, pt, false);
+                std::string jsonStr = oss.str();
+
+                std::regex interestRegex("\"interest_rate\":\\s*\"([0-9\\.]+)\"");
+                jsonStr = std::regex_replace(jsonStr, interestRegex, "\"interest_rate\": $1");
+
+
+                return jsonStr;
             }
 
         }
