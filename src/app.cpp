@@ -15,6 +15,7 @@
 #include "endpoints/test_rabbit_endpoint.h"
 #include "endpoints/credit_endpoint.h"
 #include "endpoints/credit_history.h"
+#include "endpoints/credits_endpoint.h"
 
 void App::EndpointTrie::insert(const std::string& path, std::shared_ptr<app::endpoints::Endpoint> endpoint) {
     TrieNode* node = &root;
@@ -141,6 +142,7 @@ void App::register_endpoints() {
     endpointTrie.insert("/credit-limit", std::make_shared<CreditLimitEndpoint>(db_));
     endpointTrie.insert("/test-rabbit", std::make_shared<app::endpoints::TestRabbitEndpoint>(rabbitmq_));
     endpointTrie.insert("/credit", std::make_shared<CreditEndpoint>(db_, rabbitmq_));
+    endpointTrie.insert("/credits", std::make_shared<CreditsEndpoint>(db_));
     endpointTrie.insert("/get-payment-history", std::make_shared<CreditHistoryEndpoint>(db_));
 
     fixed_endpoints_["/time"] = std::make_unique<app::endpoints::TimeEndpoint>();

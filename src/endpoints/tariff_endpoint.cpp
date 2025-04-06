@@ -205,7 +205,14 @@ namespace endpoints {
                 }
 
                 PQclear(res);
-                pt.add_child("tariffs", tariffs);
+                if (!tariffs.empty()) {
+                    pt.add_child("tariffs", tariffs);
+                }
+                else {
+                    std::ostringstream oss;
+                    oss << "{\"tariffs\": []}";
+                    return oss.str();
+                }
 
                 std::ostringstream oss;
                 boost::property_tree::write_json(oss, pt, false);
