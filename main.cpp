@@ -9,6 +9,8 @@
 #include "models/db_models/credit_model.h"
 #include <csignal>
 #include <atomic>
+
+#include "models/db_models/credit_payment_model.h"
 std::atomic<bool> running{true};
 
 std::mutex mtx;
@@ -29,9 +31,11 @@ int main() {
         auto tariff_model = std::make_shared<TariffModel>();
         auto credit_history_model = std::make_shared<CreditHistoryModel>();
         auto credit_model = std::make_shared<CreditModel>();
+        auto credit_payment_model = std::make_shared<CreditPaymentModel>();
         DatabaseInitializer::instance().register_model(tariff_model);
         DatabaseInitializer::instance().register_model(credit_history_model);
         DatabaseInitializer::instance().register_model(credit_model);
+        DatabaseInitializer::instance().register_model(credit_payment_model);
 
         db::DatabaseManager db(config);
         RabbitMQManager rabbitmq(config, db);
@@ -43,7 +47,6 @@ int main() {
 
         std::unique_lock<std::mutex> lock(mtx);
         cv.wait(lock, [] { return !running.load(); });
-
 
         // app.stop();
         // rabbitmq.stop();

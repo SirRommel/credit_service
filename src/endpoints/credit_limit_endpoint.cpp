@@ -66,7 +66,12 @@ boost::beast::http::response<boost::beast::http::string_body> CreditLimitEndpoin
 
         std::ostringstream oss;
         boost::property_tree::write_json(oss, pt);
-        res.body() = oss.str();
+        std::string jsonStr = oss.str();
+
+        std::regex limit_regex("\"limit\":\\s*\"([0-9\\.]+)\"");
+        jsonStr = std::regex_replace(jsonStr, limit_regex, "\"limit\": $1");
+
+        res.body() = jsonStr;
         res.prepare_payload();
         return res;
 

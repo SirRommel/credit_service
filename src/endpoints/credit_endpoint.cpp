@@ -204,8 +204,16 @@ std::string CreditEndpoint::get_credit(std::string id) {
         pt.add_child("credit", credits);
 
         std::ostringstream oss;
-        boost::property_tree::write_json(oss, pt);
-        return oss.str();
+        boost::property_tree::write_json(oss, pt, false);
+        std::string jsonStr = oss.str();
+
+        std::regex amount_regex("\"amount\":\\s*\"([0-9\\.]+)\"");
+        jsonStr = std::regex_replace(jsonStr, amount_regex, "\"amount\": $1");
+
+        std::regex remaining_debt_regex("\"remaining_debt\":\\s*\"([0-9\\.]+)\"");
+        jsonStr = std::regex_replace(jsonStr, remaining_debt_regex, "\"remaining_debt\": $1");
+
+        return jsonStr;
     } else {
         const char* params[] = {};
         db_.async_query_params(
@@ -238,8 +246,13 @@ std::string CreditEndpoint::get_credit(std::string id) {
         pt.add_child("credits", credits);
 
         std::ostringstream oss;
-        boost::property_tree::write_json(oss, pt);
-        return oss.str();
+        boost::property_tree::write_json(oss, pt, false);
+        std::string jsonStr = oss.str();
+
+        std::regex remaining_debt_regex("\"remaining_debt\":\\s*\"([0-9\\.]+)\"");
+        jsonStr = std::regex_replace(jsonStr, remaining_debt_regex, "\"remaining_debt\": $1");
+
+        return jsonStr;
     }
 
 }

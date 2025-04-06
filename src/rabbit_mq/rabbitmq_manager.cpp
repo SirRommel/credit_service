@@ -325,14 +325,28 @@ void RabbitMQManager::add_credit_to_db(const auto& json) {
     }
     PQclear(db_result);
 }
+std::string get_current_date() {
+    // Получаем текущее время
+    auto now = std::chrono::system_clock::now();
+
+    // Конвертируем в time_t для работы с датой
+    std::time_t now_time = std::chrono::system_clock::to_time_t(now);
+
+    // Преобразуем time_t в строку
+    std::stringstream ss;
+    ss << std::put_time(std::localtime(&now_time), "%Y-%m-%d %H:%M:%S"); // Формат "YYYY-MM-DD HH:MM:SS"
+
+    return ss.str();
+}
 
 void RabbitMQManager::add_pay(const auto& json) {
     try {
         std::cout << "add_pay fdfwfewwggggwegwgweFFFFFFFFFFFFFFFFFF" << std::endl;
         std::string user_id = json.template get<std::string>("user_id");
         double amount = json.template get<double>("amount");
+        std::string summ_str = std::to_string(amount);
         bool success = json.template get<bool>("success", false);
-
+        std::string success_str = std::to_string(success);
         // обновляем рейтинг в credit_history
         std::string update_rating_query =
             "UPDATE credit_history "
@@ -341,6 +355,28 @@ void RabbitMQManager::add_pay(const auto& json) {
                 "ELSE GREATEST(rating - 1, 0) "
             "END "
             "WHERE user_id = $2";
+
+        const char* paramValues[4];
+        paramValues[0] = user_id.c_str();
+        paramValues[1] = summ_str.c_str();
+        paramValues[2] = success_str.c_str();
+        std::string current_date = get_current_date();
+        paramValues[3] = current_date.c_str();
+        std::promise<PGresult*> db_promise;
+        db_.async_query_params(
+            "INSERT INTO credit_payments (user_id, summ, status, payment_date) "
+            "VALUES ($1, $2, $3, $4)",
+            paramValues,
+            4,
+            [&](PGresult* res) { db_promise.set_value(res); }
+        );
+        PGresult* db_result = db_promise.get_future().get();
+        if (PQresultStatus(db_result) != PGRES_COMMAND_OK) {
+            std::string error = PQerrorMessage(db_.get_connection());
+            PQclear(db_result);
+            throw std::runtime_error("Database error: " + error);
+        }
+        PQclear(db_result);
 
         std::promise<PGresult*> rating_promise;
         const char* rating_params[] = {

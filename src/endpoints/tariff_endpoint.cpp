@@ -143,8 +143,16 @@ namespace endpoints {
                     tariff.put("id", PQgetvalue(res, i, 0));
                     tariff.put("employee_id", PQgetvalue(res, i, 1));
                     tariff.put("name", PQgetvalue(res, i, 2));
-                    tariff.put("interest_rate", PQgetvalue(res, i, 3));
-                    tariff.put("months_count", PQgetvalue(res, i, 4));
+
+                    // Преобразование interest_rate в double
+                    std::string interestRateStr = PQgetvalue(res, i, 3);
+                    tariff.put("interest_rate", interestRateStr);
+
+                    // Преобразование months_count в int
+                    std::string monthsCountStr = PQgetvalue(res, i, 4);
+                    int monthsCount = std::stoi(monthsCountStr);
+                    tariff.put("months_count", monthsCount);
+
                     tariffs.push_back(std::make_pair("", tariff));
                 }
 
@@ -152,8 +160,16 @@ namespace endpoints {
                 pt.add_child("tariff", tariffs);
 
                 std::ostringstream oss;
-                boost::property_tree::write_json(oss, pt);
-                return oss.str();
+                boost::property_tree::write_json(oss, pt, false);
+                std::string jsonStr = oss.str();
+
+                std::regex interestRegex("\"interest_rate\":\\s*\"([0-9\\.]+)\"");
+                jsonStr = std::regex_replace(jsonStr, interestRegex, "\"interest_rate\": $1");
+
+                std::regex monthsRegex("\"months_count\":\\s*\"(\\d+)\"");
+                jsonStr = std::regex_replace(jsonStr, monthsRegex, "\"months_count\": $1");
+
+                return jsonStr;
             } else {
                 const char* params[] = {};
                 db_.async_query_params(
@@ -171,21 +187,31 @@ namespace endpoints {
 
                 boost::property_tree::ptree pt;
                 boost::property_tree::ptree tariffs;
+                std::ostringstream oss;
+                oss << "{\n  \"tariffs\": [";
 
                 int rows = PQntuples(res);
                 for (int i = 0; i < rows; ++i) {
                     boost::property_tree::ptree tariff;
                     tariff.put("id", PQgetvalue(res, i, 0));
                     tariff.put("name", PQgetvalue(res, i, 2));
-                    tariff.put("interest_rate", PQgetvalue(res, i, 3));
+                    std::string interestRateStr = PQgetvalue(res, i, 3);
+                    double interestRate = std::stod(interestRateStr);
+                    interestRate = std::round(interestRate * 100) / 100;
+                    tariff.put("interest_rate", interestRate);
                     tariffs.push_back(std::make_pair("", tariff));
+
+                    oss << "\n    {\n";
+                    oss << "      \"id\": \"" << PQgetvalue(res, i, 0) << "\",\n";
+                    oss << "      \"name\": \"" << PQgetvalue(res, i, 2) << "\",\n";
+                    oss << "      \"interest_rate\": " << interestRate << "\n";
+                    oss << "    }";
                 }
 
                 PQclear(res);
-                pt.add_child("tariffs", tariffs);
 
-                std::ostringstream oss;
-                boost::property_tree::write_json(oss, pt);
+                oss << "\n  ]\n}";
+                std::cout << oss.str() << std::endl;
                 return oss.str();
             }
 
@@ -195,7 +221,7 @@ namespace endpoints {
                 std::stringstream ss(body);
                 boost::property_tree::ptree pt;
                 boost::property_tree::read_json(ss, pt);
-        
+
 
                 std::vector<std::string> updates;
 
@@ -254,7 +280,13 @@ namespace endpoints {
                 }
 
                 PQclear(res);
-                return "Tariff updated successfully";
+                boost::property_tree::ptree response;
+                response.put("updated_id", id);
+                response.put("status", "success");
+
+                std::ostringstream json;
+                boost::property_tree::write_json(json, response, false);
+                return json.str();
             }
 
         std::string TariffEndpoint::delete_tariff(std::string id) {
@@ -271,8 +303,17 @@ namespace endpoints {
             }
 
             PQclear(res);
-            return "Tariff deleted successfully";
+
+            // Возвращаем JSON
+            boost::property_tree::ptree response;
+            response.put("deleted_id", id);
+            response.put("status", "success");
+
+            std::ostringstream json;
+            boost::property_tree::write_json(json, response, false);
+            return json.str();
         }
+
 
 
         } // namespace endpoints
