@@ -482,7 +482,7 @@ void RabbitMQManager::send_periodic_message() {
             json.put("user_id", user_id);
             json.put("amount", amount);
             json.put("account_id", account_id);
-            json.put("message_type", "write_off_money");
+            json.put("type_message", "write_off_money");
             json.put("message", "Monthly payment");
 
             std::ostringstream oss;
