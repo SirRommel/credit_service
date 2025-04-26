@@ -149,13 +149,6 @@ boost::beast::http::response<boost::beast::http::string_body> CreditEndpoint::cr
 
     std::cout << user_id_str << ", " << tariff_id_str << ", " << amount << std::endl;
 
-    const char* paramValues[4];
-    paramValues[0] = user_id_str.c_str();
-    paramValues[1] = tariff_id_str.c_str();
-    std::string amount_str = std::to_string(amount);
-    paramValues[2] = amount_str.c_str();
-    paramValues[3] = write_off_account_id_str ?
-        write_off_account_id_str->c_str() : nullptr;
 
     res.result(boost::beast::http::status::ok);
     std::ostringstream json_stream;

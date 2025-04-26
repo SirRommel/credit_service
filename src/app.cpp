@@ -16,6 +16,46 @@
 #include "endpoints/credit_endpoint.h"
 #include "endpoints/credit_history.h"
 #include "endpoints/credits_endpoint.h"
+#include "endpoints/metrics_endpoint.h"
+#include <prometheus/counter.h>
+#include <prometheus/exposer.h>
+#include <prometheus/gauge.h>
+#include <prometheus/registry.h>
+#include <prometheus/serializer.h>
+#include <prometheus/summary.h>
+#include <prometheus/text_serializer.h>
+#include <random>
+#include <ctime>
+
+
+struct RequestTracker {
+    prometheus::Gauge& active_requests;
+    prometheus::Summary& duration;
+    prometheus::Counter& errors;
+    std::chrono::steady_clock::time_point start;
+    bool success = false;
+
+    RequestTracker(prometheus::Gauge& active,
+                   prometheus::Summary& dur,
+                   prometheus::Counter& err)
+            : active_requests(active), duration(dur), errors(err),
+              start(std::chrono::steady_clock::now()) {
+        active_requests.Increment();
+    }
+
+    ~RequestTracker() {
+        active_requests.Decrement();
+        auto dur = std::chrono::duration<double>(
+                std::chrono::steady_clock::now() - start).count();
+        duration.Observe(dur);
+        if (!success) errors.Increment();
+    }
+};
+
+
+
+
+
 
 void App::EndpointTrie::insert(const std::string& path, std::shared_ptr<app::endpoints::Endpoint> endpoint) {
     TrieNode* node = &root;
@@ -79,6 +119,41 @@ App::App(const std::map<std::string, std::string>& config, db::DatabaseManager& 
                   << host << ":" << port << " - " << e.what() << std::endl;
         throw;
     }
+
+    registry_ = std::make_shared<prometheus::Registry>();
+
+    auto& active_requests_family = prometheus::BuildGauge()
+            .Name("http_server_requests_active_seconds_count")
+            .Help("Active requests in progress")
+            .Register(*registry_);
+    active_requests_ = &active_requests_family.Add({});
+
+    auto& errors_family = prometheus::BuildCounter()
+            .Name("http_request_errors_total")
+            .Help("Total number of request errors")
+            .Register(*registry_);
+    request_errors_ = &errors_family.Add({});
+
+    auto& duration_family = prometheus::BuildSummary()
+            .Name("http_request_duration_seconds")
+            .Help("Request duration summary")
+            .Register(*registry_);
+
+
+    request_duration_ = &duration_family.Add(
+            {},
+            prometheus::Summary::Quantiles{{0.5, 0.05}, {0.9, 0.01}, {0.99, 0.001}},
+            std::chrono::seconds(60),
+            5
+    );
+
+    // В конструкторе App:
+    endpointTrie.insert(
+            "/metrics",
+            std::static_pointer_cast<app::endpoints::Endpoint>(
+                    std::make_shared<MetricsEndpoint>(registry_)
+            )
+    );
 
 
     register_endpoints();
@@ -158,6 +233,9 @@ void App::register_endpoints() {
 
 
 void App::handle_request(tcp::socket socket, beast::flat_buffer buffer) {
+    RequestTracker tracker(*active_requests_,
+                           *request_duration_,
+                           *request_errors_);
     http::request<http::string_body> req;
     http::read(socket, buffer, req);
 
@@ -165,25 +243,61 @@ void App::handle_request(tcp::socket socket, beast::flat_buffer buffer) {
               << " request for " << req.target() << std::endl;
 
     http::response<http::string_body> res;
-    try {
-        std::shared_ptr<app::endpoints::Endpoint> endpoint = endpointTrie.find(req.target());
-        if (endpoint) {
-            if (endpoint->allowed_methods().count(req.method()) == 0) {
-                res = app::errors::method_not_allowed(req);
-            } else {
-                res = endpoint->handle(req);
-            }
-        } else {
-            res = app::errors::not_found(req);
-        }
-    } catch (...) {
-        res = app::errors::create_error_response(
-            http::status::internal_server_error,
-            "Internal Server Error",
-            req);
+
+    auto now = std::chrono::system_clock::now();
+    auto time = std::chrono::system_clock::to_time_t(now);
+    std::tm* now_tm = std::localtime(&time);
+    int current_minute = now_tm->tm_min;
+
+    thread_local std::random_device rd;
+    thread_local std::mt19937 gen(rd());
+    std::uniform_int_distribution<> dis(0, 100);
+    int random_value = dis(gen);
+
+    bool should_fail = false;
+    if (current_minute % 2 == 0) {
+        should_fail = (random_value <= 90);
+    } else {
+        should_fail = (random_value <= 50);
     }
 
-    res.prepare_payload();
-    http::write(socket, res);
-    socket.shutdown(tcp::socket::shutdown_send);
+    if (should_fail) {
+        RequestTracker tracker(*active_requests_,
+                               *request_duration_,
+                               *request_errors_);
+        http::response<http::string_body> res = app::errors::create_error_response(
+                http::status::internal_server_error,
+                "Simulated 500 error",
+                http::request<http::string_body>()
+        );
+        res.prepare_payload();
+        http::write(socket, res);
+        socket.shutdown(tcp::socket::shutdown_send);
+    }
+    else {
+        try {
+            std::shared_ptr<app::endpoints::Endpoint> endpoint = endpointTrie.find(req.target());
+            if (endpoint) {
+                if (endpoint->allowed_methods().count(req.method()) == 0) {
+                    res = app::errors::method_not_allowed(req);
+                } else {
+                    res = endpoint->handle(req);
+                    tracker.success = true;
+                }
+            } else {
+                res = app::errors::not_found(req);
+            }
+        } catch (...) {
+            res = app::errors::create_error_response(
+                    http::status::internal_server_error,
+                    "Internal Server Error",
+                    req);
+        }
+
+        res.prepare_payload();
+        http::write(socket, res);
+        socket.shutdown(tcp::socket::shutdown_send);
+    }
+
+
 }

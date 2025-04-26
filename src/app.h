@@ -12,7 +12,13 @@
 #include "tools/utils.h"
 #include "db/database_manager.h"
 #include "rabbit_mq/rabbitmq_manager.h"
-
+#include <prometheus/counter.h>
+#include <prometheus/exposer.h>
+#include <prometheus/gauge.h>
+#include <prometheus/registry.h>
+#include <prometheus/summary.h>
+#include "endpoints/endpoint.h"
+#include <prometheus/serializer.h>
 
 namespace beast = boost::beast;
 namespace http = beast::http;
@@ -61,6 +67,10 @@ private:
     std::thread thread_;
     std::vector<std::thread> threads_;
     std::map<std::string, std::string> config_;
+    std::shared_ptr<prometheus::Registry> registry_;
+    prometheus::Gauge* active_requests_;
+    prometheus::Counter* request_errors_;
+    prometheus::Summary* request_duration_;
 
 };
 #endif

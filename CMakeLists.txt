@@ -7,6 +7,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # Поиск зависимостей
 find_package(PostgreSQL REQUIRED)
 find_package(Boost REQUIRED COMPONENTS system filesystem)
+find_package(prometheus-cpp REQUIRED)
 
 # Исполняемый файл
 add_executable(credit_service
@@ -46,12 +47,15 @@ add_executable(credit_service
         src/endpoints/credit_history.cpp
         src/endpoints/credits_endpoint.h
         src/endpoints/credits_endpoint.cpp
-        
+        src/endpoints/metrics_endpoint.h
+        src/endpoints/metrics_endpoint.cpp
+
 )
 
 # Настройка include
 target_include_directories(credit_service PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src
+        ${prometheus-cpp_INCLUDE_DIRS}
 )
 
 # Линковка
@@ -60,6 +64,8 @@ target_link_libraries(credit_service PRIVATE
         Boost::filesystem
         PostgreSQL::PostgreSQL
         amqpcpp
+        prometheus-cpp::core
+        prometheus-cpp::pull
 )
 
 # Для совместимости с Boost.Bind
