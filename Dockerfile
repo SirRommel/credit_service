@@ -1,7 +1,7 @@
 FROM ubuntu:latest as builder
 WORKDIR /app
 
-RUN apt update
+RUN apt update && apt upgrade -y
 RUN apt install -y g++ git cmake libpq-dev libboost-dev libboost-system-dev libboost-filesystem-dev libcurl4-openssl-dev zlib1g-dev
 
 # AMQP-CPP
